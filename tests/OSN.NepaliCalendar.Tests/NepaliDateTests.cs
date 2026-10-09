@@ -24,10 +24,13 @@ public class NepaliDateTests
 
     [Theory]
     [InlineData(0, 1, 1, "year")]
+    [InlineData(1969, 12, 30, "year")]
+    [InlineData(2091, 1, 1, "year")]
     [InlineData(2081, 0, 1, "month")]
     [InlineData(2081, 13, 1, "month")]
     [InlineData(2081, 1, 0, "day")]
-    [InlineData(2081, 1, 33, "day")]
+    [InlineData(2081, 1, 32, "day")]
+    [InlineData(2081, 2, 33, "day")]
     public void Constructor_RejectsOutOfRangeComponents(int year, int month, int day, string paramName)
     {
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new NepaliDate(year, month, day));
@@ -49,7 +52,7 @@ public class NepaliDateTests
     public void Comparison_OrdersByYearThenMonthThenDay()
     {
         Assert.True(new NepaliDate(2080, 12, 30) < new NepaliDate(2081, 1, 1));
-        Assert.True(new NepaliDate(2081, 2, 1) > new NepaliDate(2081, 1, 32));
+        Assert.True(new NepaliDate(2081, 2, 1) > new NepaliDate(2081, 1, 31));
         Assert.True(new NepaliDate(2081, 1, 2) >= new NepaliDate(2081, 1, 1));
     }
 
