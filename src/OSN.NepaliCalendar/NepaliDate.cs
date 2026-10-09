@@ -7,35 +7,33 @@ namespace OSN.NepaliCalendar;
 /// A date in the Nepali (Bikram Sambat) calendar.
 /// </summary>
 /// <remarks>
-/// Validation currently checks only general ranges. Per-month day counts depend on the
-/// BS calendar data table, which arrives together with AD/BS conversion.
+/// Supported dates run from <see cref="MinValue"/> (BS 1970-01-01) to <see cref="MaxValue"/>
+/// (BS 2090-12-30), the range covered by the built-in calendar data. Every valid
+/// <see cref="NepaliDate"/> can be converted to and from a Gregorian date.
 /// </remarks>
 public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDate>, IComparable
 {
-    internal const int MaxDaysInMonth = 32;
+    /// <summary>The earliest supported date, BS 1970-01-01 (AD 1913-04-13).</summary>
+    public static readonly NepaliDate MinValue = new(BsCalendarData.MinYear, 1, 1);
+
+    /// <summary>The latest supported date, BS 2090-12-30 (AD 2034-04-13).</summary>
+    public static readonly NepaliDate MaxValue = new(BsCalendarData.MaxYear, 12, DaysInMonth(BsCalendarData.MaxYear, 12));
 
     /// <summary>
     /// Initializes a new <see cref="NepaliDate"/>.
     /// </summary>
-    /// <param name="year">The BS year.</param>
+    /// <param name="year">The BS year, from 1970 to 2090.</param>
     /// <param name="month">The month, from 1 (Baisakh) to 12 (Chaitra).</param>
-    /// <param name="day">The day of the month.</param>
+    /// <param name="day">The day of the month, from 1 to the month's length in that year.</param>
     /// <exception cref="ArgumentOutOfRangeException">A component is outside its valid range.</exception>
     public NepaliDate(int year, int month, int day)
     {
-        if (year < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(year), year, "Year must be positive.");
-        }
+        ValidateYearAndMonth(year, month);
 
-        if (month < 1 || month > 12)
+        var daysInMonth = BsCalendarData.DaysInMonth(year, month);
+        if (day < 1 || day > daysInMonth)
         {
-            throw new ArgumentOutOfRangeException(nameof(month), month, "Month must be between 1 and 12.");
-        }
-
-        if (day < 1 || day > MaxDaysInMonth)
-        {
-            throw new ArgumentOutOfRangeException(nameof(day), day, $"Day must be between 1 and {MaxDaysInMonth}.");
+            throw new ArgumentOutOfRangeException(nameof(day), day, $"Day must be between 1 and {daysInMonth} for {year}-{month:D2}.");
         }
 
         Year = year;
@@ -66,6 +64,36 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
 
     /// <summary>Gets the month as a <see cref="NepaliMonth"/>.</summary>
     public NepaliMonth NepaliMonth => (NepaliMonth)Month;
+
+    /// <summary>Gets the day of the week.</summary>
+    public DayOfWeek DayOfWeek => ToDateTime().DayOfWeek;
+
+    /// <summary>
+    /// Returns the number of days in a month of a BS year.
+    /// </summary>
+    /// <param name="year">The BS year, from 1970 to 2090.</param>
+    /// <param name="month">The month, from 1 (Baisakh) to 12 (Chaitra).</param>
+    /// <returns>The number of days, from 29 to 32.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The year or month is outside its valid range.</exception>
+    public static int DaysInMonth(int year, int month)
+    {
+        ValidateYearAndMonth(year, month);
+        return BsCalendarData.DaysInMonth(year, month);
+    }
+
+    /// <summary>
+    /// Converts a Gregorian (AD) date to its Nepali (BS) equivalent.
+    /// </summary>
+    /// <param name="date">The Gregorian date. The time of day is ignored.</param>
+    /// <returns>The equivalent <see cref="NepaliDate"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The date is outside the supported range.</exception>
+    public static NepaliDate FromDateTime(DateTime date) => NepaliDateConverter.ToNepali(date);
+
+    /// <summary>
+    /// Converts this date to its Gregorian (AD) equivalent.
+    /// </summary>
+    /// <returns>The equivalent Gregorian date at midnight, with <see cref="DateTimeKind.Unspecified"/> kind.</returns>
+    public DateTime ToDateTime() => NepaliDateConverter.ToGregorian(this);
 
     /// <inheritdoc />
     public bool Equals(NepaliDate other) => Year == other.Year && Month == other.Month && Day == other.Day;
@@ -102,6 +130,19 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
     /// </summary>
     public override string ToString() =>
         string.Format(CultureInfo.InvariantCulture, "{0:D4}-{1:D2}-{2:D2}", Year, Month, Day);
+
+    private static void ValidateYearAndMonth(int year, int month)
+    {
+        if (!BsCalendarData.IsSupportedYear(year))
+        {
+            throw new ArgumentOutOfRangeException(nameof(year), year, $"Year must be between {BsCalendarData.MinYear} and {BsCalendarData.MaxYear}.");
+        }
+
+        if (month < 1 || month > 12)
+        {
+            throw new ArgumentOutOfRangeException(nameof(month), month, "Month must be between 1 and 12.");
+        }
+    }
 
 #pragma warning disable CS1591 // Operators are self-describing.
     public static bool operator ==(NepaliDate left, NepaliDate right) => left.Equals(right);
