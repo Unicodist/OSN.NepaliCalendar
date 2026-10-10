@@ -44,7 +44,7 @@ jobs:
       - name: Smoke-test the built core package
         run: >-
           node --input-type=module -e "
-          import { toBs, toAd, formatBs } from '@osn/nepali-calendar';
+          import { toBs, toAd, formatBs } from '@opensourcenepal/nepali-calendar';
           const bs = toBs({ year: 2025, month: 10, day: 2 });
           if (formatBs(bs, 'D', 'nepali') !== '१६ असोज २०८२') throw new Error(formatBs(bs, 'D', 'nepali'));
           if (toAd(bs).day !== 2) throw new Error('round trip');

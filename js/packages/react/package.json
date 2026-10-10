@@ -1,5 +1,5 @@
 {
-  "name": "@osn/nepali-calendar-react",
+  "name": "@opensourcenepal/nepali-calendar-react",
   "version": "0.1.0",
   "description": "React month-view calendar and date picker for Nepali (Bikram Sambat) dates, with AD dates alongside.",
   "license": "MIT",
@@ -39,7 +39,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@osn/nepali-calendar": "0.1.0"
+    "@opensourcenepal/nepali-calendar": "0.1.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

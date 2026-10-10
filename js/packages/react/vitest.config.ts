@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
     resolve: {
         alias: {
-            '@osn/nepali-calendar': fileURLToPath(new URL('../core/src/index.ts', import.meta.url)),
+            '@opensourcenepal/nepali-calendar': fileURLToPath(new URL('../core/src/index.ts', import.meta.url)),
         },
     },
     test: {

@@ -4,7 +4,7 @@
     "jsx": "react-jsx",
     "types": ["node"],
     "paths": {
-      "@osn/nepali-calendar": ["../core/src/index.ts"]
+      "@opensourcenepal/nepali-calendar": ["../core/src/index.ts"]
     }
   },
   "include": ["src", "test"]

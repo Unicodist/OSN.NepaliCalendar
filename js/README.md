@@ -2,11 +2,11 @@
 
 npm workspaces with the JavaScript side of OSN.NepaliCalendar:
 
-| Package                                            | What it is                                                                                                                                       |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`@osn/nepali-calendar`](packages/core)            | Framework-free TypeScript core: AD/BS conversion, validation, Roman and Devanagari names and formatting, and the month grid the components draw. |
-| [`@osn/nepali-calendar-react`](packages/react)     | `<NepaliCalendar>` for React 18+.                                                                                                                |
-| [`@osn/nepali-calendar-angular`](packages/angular) | `<osn-nepali-calendar>` for Angular 22, usable with `[(value)]` or as a form control.                                                            |
+| Package                                                        | What it is                                                                                                                                       |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`@opensourcenepal/nepali-calendar`](packages/core)            | Framework-free TypeScript core: AD/BS conversion, validation, Roman and Devanagari names and formatting, and the month grid the components draw. |
+| [`@opensourcenepal/nepali-calendar-react`](packages/react)     | `<NepaliCalendar>` for React 18+.                                                                                                                |
+| [`@opensourcenepal/nepali-calendar-angular`](packages/angular) | `<osn-nepali-calendar>` for Angular 22, usable with `[(value)]` or as a form control.                                                            |
 
 Both components show a BS month with each AD day under its BS day and the AD months in the
 header, switch between Nepali and Roman script, move between months (and with the arrow keys
@@ -17,7 +17,7 @@ between days), jump back to today, and let the user pick a day. They cover the s
 ## Core
 
 ```ts
-import { toBs, toAd, formatBs, daysInMonth, isValidBsDate } from '@osn/nepali-calendar';
+import { toBs, toAd, formatBs, daysInMonth, isValidBsDate } from '@opensourcenepal/nepali-calendar';
 
 const bs = toBs(new Date(2025, 9, 2)); // { year: 2082, month: 6, day: 16 }, read in local time
 toAd({ year: 2082, month: 1, day: 1 }); // { year: 2025, month: 4, day: 14 }
@@ -33,8 +33,8 @@ isValidBsDate(2081, 1, 32); // false
 ## React
 
 ```tsx
-import { NepaliCalendar, type BsDate } from '@osn/nepali-calendar-react';
-import '@osn/nepali-calendar-react/styles.css';
+import { NepaliCalendar, type BsDate } from '@opensourcenepal/nepali-calendar-react';
+import '@opensourcenepal/nepali-calendar-react/styles.css';
 
 function Example() {
     const [date, setDate] = useState<BsDate | null>(null);
@@ -48,7 +48,7 @@ Props: `value`/`defaultValue`/`onChange(bs, ad)`, `script`/`defaultScript`/`onSc
 ## Angular
 
 ```ts
-import { NepaliCalendarComponent, type BsDate } from '@osn/nepali-calendar-angular';
+import { NepaliCalendarComponent, type BsDate } from '@opensourcenepal/nepali-calendar-angular';
 
 @Component({
     imports: [NepaliCalendarComponent],
@@ -59,7 +59,7 @@ export class Example {
 }
 ```
 
-Add the stylesheet to `angular.json` (`"styles": ["@osn/nepali-calendar/styles.css"]`). The
+Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar/styles.css"]`). The
 component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
 `[(script)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `today`.
