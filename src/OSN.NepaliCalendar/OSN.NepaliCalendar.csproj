@@ -19,6 +19,8 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <EnablePackageValidation>true</EnablePackageValidation>
+    <!-- The release workflow sets PackageReleaseNotes to the release's notes; a local pack links to them. -->
+    <PackageReleaseNotes Condition="'$(PackageReleaseNotes)' == ''">https://github.com/Unicodist/OSN.NepaliCalendar/releases/tag/nuget-v$(VersionPrefix)</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
