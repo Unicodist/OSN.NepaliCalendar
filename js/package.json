@@ -16,7 +16,9 @@
     "test": "npm test --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "prettier --check .",
-    "build-storybook": "npm run build-storybook -w packages/react -w packages/angular"
+    "build-storybook": "npm run build-storybook -w packages/react -w packages/angular",
+    "release": "node scripts/publish.mjs",
+    "release:dry-run": "node scripts/publish.mjs --dry-run"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
