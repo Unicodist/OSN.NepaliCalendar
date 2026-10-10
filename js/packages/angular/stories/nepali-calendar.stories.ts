@@ -48,6 +48,18 @@ export const StartOfRange: Story = {
     args: { script: 'roman', initialMonth: { year: 1970, month: 1 } },
 };
 
+/**
+ * Only 10 Ashwin to 20 Mangsir 2082 can be picked: other days are disabled, and the arrows and
+ * pickers stop at the range.
+ */
+export const MinAndMax: Story = {
+    args: {
+        script: 'roman',
+        min: { year: 2082, month: 6, day: 10 },
+        max: { year: 2082, month: 8, day: 20 },
+    },
+};
+
 /** BS dates only: no AD dates, script toggle or today button. */
 export const Minimal: Story = {
     args: { showAdDates: false, showScriptToggle: false, showTodayButton: false },

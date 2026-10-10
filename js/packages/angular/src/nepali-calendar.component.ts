@@ -15,12 +15,20 @@ import {
     inject,
     signal,
 } from '@angular/core';
-import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+    type AbstractControl,
+    type ControlValueAccessor,
+    NG_VALIDATORS,
+    NG_VALUE_ACCESSOR,
+    type ValidationErrors,
+    type Validator,
+} from '@angular/forms';
 import {
     ABBREVIATED_DAY_NAMES,
     type AdDate,
     type BsDate,
     DAY_NAMES,
+    type DateRange,
     MONTH_NAMES,
     MAX_DATE,
     MIN_DATE,
@@ -28,7 +36,11 @@ import {
     type Script,
     addDays,
     buildMonthView,
+    clampBs,
+    clampMonth,
+    compareBs,
     formatBs,
+    isMonthInRange,
     isSameBs,
     monthName,
     shiftMonth,
@@ -44,13 +56,17 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
  * A month-view Nepali (BS) calendar that shows AD dates alongside and lets the user pick a day.
  *
  * Bind `[(value)]` or use it as a form control (`ngModel`, `formControl`); the value is a
- * `BsDate` (`{ year, month, day }`). Styles come from `@opensourcenepal/nepali-calendar-angular/styles.css`.
+ * `BsDate` (`{ year, month, day }`). With `min` or `max` set, a form control also gets the
+ * `minDate` or `maxDate` validation error when its value falls outside them. Styles come from `@opensourcenepal/nepali-calendar-angular/styles.css`.
  */
 @Component({
     selector: 'osn-nepali-calendar',
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
-    providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => NepaliCalendarComponent), multi: true }],
+    providers: [
+        { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => NepaliCalendarComponent), multi: true },
+        { provide: NG_VALIDATORS, useExisting: forwardRef(() => NepaliCalendarComponent), multi: true },
+    ],
     host: {
         class: 'osn-cal',
         '[attr.lang]': "nepali() ? 'ne' : 'en'",
@@ -75,7 +91,13 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                         (change)="jumpTo(view().year, +$any($event.target).value)"
                     >
                         @for (name of monthNames(); track $index) {
-                            <option [value]="$index + 1" [selected]="$index + 1 === view().month">{{ name }}</option>
+                            <option
+                                [value]="$index + 1"
+                                [selected]="$index + 1 === view().month"
+                                [disabled]="!monthInRange($index + 1)"
+                            >
+                                {{ name }}
+                            </option>
                         }
                     </select>
                     <select
@@ -84,7 +106,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                         [disabled]="disabled()"
                         (change)="jumpTo(+$any($event.target).value, view().month)"
                     >
-                        @for (year of years; track year) {
+                        @for (year of years(); track year) {
                             <option [value]="year" [selected]="year === view().year">{{ digits(year) }}</option>
                         }
                     </select>
@@ -130,12 +152,13 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                                         [class.osn-cal__day--saturday]="day.dayOfWeek === 6"
                                         [class.osn-cal__day--today]="day.isToday"
                                         [class.osn-cal__day--selected]="day.isSelected"
+                                        [class.osn-cal__day--disabled]="day.isDisabled"
                                         [attr.tabindex]="isTabStop(day) ? 0 : -1"
                                         [attr.aria-label]="label(day)"
                                         [attr.aria-current]="day.isToday ? 'date' : null"
                                         [attr.aria-pressed]="day.isSelected"
                                         [attr.data-date]="day.key"
-                                        [disabled]="disabled()"
+                                        [disabled]="disabled() || day.isDisabled"
                                         (click)="select(day.bs)"
                                         (keydown)="onDayKeyDown($event, day.bs)"
                                     >
@@ -176,7 +199,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
         }
     `,
 })
-export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor {
+export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor, Validator {
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly changeDetector = inject(ChangeDetectorRef);
 
@@ -217,6 +240,24 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
     /** The month shown first. Defaults to the month of the selection, or of today. */
     @Input() initialMonth: { year: number; month: number } | null = null;
 
+    /** The earliest BS date the user can pick. Earlier days are disabled and navigation stops at its month. */
+    @Input() set min(value: BsDate | null | undefined) {
+        this.range.update((range) => ({ ...range, min: value ?? null }));
+        this.onValidatorChange();
+    }
+    get min(): BsDate | null {
+        return this.range().min ?? null;
+    }
+
+    /** The latest BS date the user can pick. Later days are disabled and navigation stops at its month. */
+    @Input() set max(value: BsDate | null | undefined) {
+        this.range.update((range) => ({ ...range, max: value ?? null }));
+        this.onValidatorChange();
+    }
+    get max(): BsDate | null {
+        return this.range().max ?? null;
+    }
+
     /** Today's BS date. Defaults to today in local time; mainly useful for tests and server rendering. */
     @Input() set today(value: BsDate | null | undefined) {
         this.todayDate.set(value ?? safeToday());
@@ -228,19 +269,22 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
     protected readonly disabled = signal(false);
     protected readonly visible = signal<{ year: number; month: number } | null>(null);
     protected readonly focused = signal<BsDate | null>(null);
+    protected readonly range = signal<DateRange>({ min: null, max: null });
 
     protected readonly nepali = computed(() => this.activeScript() === 'nepali');
     protected readonly weekdays = computed(() => ABBREVIATED_DAY_NAMES[this.activeScript()]);
     protected readonly weekdayNames = computed(() => DAY_NAMES[this.activeScript()]);
     protected readonly monthNames = computed(() => MONTH_NAMES[this.activeScript()]);
-    protected readonly years = supportedYears();
+    protected readonly years = computed(() => supportedYears(this.range()));
 
     protected readonly view = computed(() => {
         const visible = this.visible() ?? this.selected() ?? this.todayDate();
-        return buildMonthView(visible.year, visible.month, {
+        const shown = clampMonth(visible.year, visible.month, this.range());
+        return buildMonthView(shown.year, shown.month, {
             today: this.todayDate(),
             selected: this.selected(),
             script: this.activeScript(),
+            ...this.range(),
         });
     });
 
@@ -248,11 +292,11 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
         () => `${monthName(this.view().month, this.activeScript())} ${toDigits(this.view().year, this.activeScript())}`,
     );
 
-    /** The one day reachable with Tab: the focused day, else the selection, today or the 1st. */
+    /** The one day reachable with Tab: the focused day, else the selection, today or the first enabled day. */
     private readonly tabStop = computed(() => {
         const days = this.view()
             .weeks.flat()
-            .filter((d): d is MonthViewDay => d !== null);
+            .filter((d): d is MonthViewDay => d !== null && !d.isDisabled);
         for (const candidate of [this.focused(), this.selected(), this.todayDate()]) {
             const match = days.find((d) => isSameBs(d.bs, candidate));
             if (match) return match.bs;
@@ -262,6 +306,7 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
 
     private onChange: (value: BsDate | null) => void = () => {};
     private onTouched: () => void = () => {};
+    private onValidatorChange: () => void = () => {};
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['initialMonth'] && this.initialMonth) {
@@ -271,6 +316,10 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
 
     protected isTabStop(day: MonthViewDay): boolean {
         return isSameBs(day.bs, this.tabStop());
+    }
+
+    protected monthInRange(month: number): boolean {
+        return isMonthInRange(this.view().year, month, this.range());
     }
 
     protected label(day: MonthViewDay): string {
@@ -298,18 +347,18 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
     protected moveMonth(delta: number): void {
         const view = this.view();
         this.focused.set(null);
-        this.visible.set(shiftMonth(view.year, view.month, delta));
+        this.visible.set(shiftMonth(view.year, view.month, delta, this.range()));
     }
 
     protected jumpTo(year: number, month: number): void {
         this.focused.set(null);
-        this.visible.set({ year, month });
+        this.visible.set(clampMonth(year, month, this.range()));
     }
 
     protected goToToday(): void {
         const today = this.todayDate();
         this.focused.set(null);
-        this.visible.set({ year: today.year, month: today.month });
+        this.visible.set(clampMonth(today.year, today.month, this.range()));
     }
 
     protected onDayKeyDown(event: KeyboardEvent, day: BsDate): void {
@@ -324,6 +373,7 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
         } catch {
             target = step < 0 ? MIN_DATE : MAX_DATE;
         }
+        target = clampBs(target, this.range());
         this.focused.set(target);
         this.visible.set({ year: target.year, month: target.month });
         this.changeDetector.detectChanges();
@@ -345,6 +395,22 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
 
     setDisabledState(isDisabled: boolean): void {
         this.disabled.set(isDisabled);
+    }
+
+    validate(control: AbstractControl<BsDate | null>): ValidationErrors | null {
+        const value = control.value;
+        const { min, max } = this.range();
+        if (value && min && compareBs(value, min) < 0) {
+            return { minDate: { min, actual: value } };
+        }
+        if (value && max && compareBs(value, max) > 0) {
+            return { maxDate: { max, actual: value } };
+        }
+        return null;
+    }
+
+    registerOnValidatorChange(fn: () => void): void {
+        this.onValidatorChange = fn;
     }
 }
 

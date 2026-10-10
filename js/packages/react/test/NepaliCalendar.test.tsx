@@ -144,4 +144,57 @@ describe('NepaliCalendar', () => {
         expect(document.querySelector('.osn-cal__title-ad')).toBeNull();
         expect(document.querySelector('.osn-cal__toolbar')).toBeNull();
     });
+
+    describe('min and max', () => {
+        const min: BsDate = { year: 2081, month: 4, day: 10 };
+        const max: BsDate = { year: 2081, month: 6, day: 5 };
+
+        it('disables days outside the range and does not pick them', async () => {
+            const onChange = vi.fn();
+            render(<NepaliCalendar today={today} defaultScript="roman" min={min} max={max} onChange={onChange} />);
+
+            const before = screen.getByRole('button', { name: /, 9 Shrawan 2081$/ }) as HTMLButtonElement;
+            expect(before.disabled).toBe(true);
+            expect(before.classList.contains('osn-cal__day--disabled')).toBe(true);
+            await userEvent.click(before);
+            expect(onChange).not.toHaveBeenCalled();
+
+            await userEvent.click(screen.getByRole('button', { name: /, 10 Shrawan 2081$/ }));
+            expect(onChange).toHaveBeenCalledWith(min, { year: 2024, month: 7, day: 25 });
+        });
+
+        it('stops month navigation and limits the pickers to the range', async () => {
+            render(<NepaliCalendar today={today} defaultScript="roman" min={min} max={max} />);
+
+            const previous = screen.getByRole('button', { name: 'Previous month' }) as HTMLButtonElement;
+            expect(previous.disabled).toBe(true);
+            await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+            await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+            expect(title()).toBe('Ashwin 2081');
+            expect((screen.getByRole('button', { name: 'Next month' }) as HTMLButtonElement).disabled).toBe(true);
+
+            const years = screen.getByRole('combobox', { name: 'Year' }) as HTMLSelectElement;
+            expect([...years.options].map((o) => o.value)).toEqual(['2081']);
+            const months = screen.getByRole('combobox', { name: 'Month' }) as HTMLSelectElement;
+            expect([...months.options].filter((o) => !o.disabled).map((o) => o.text)).toEqual([
+                'Shrawan',
+                'Bhadra',
+                'Ashwin',
+            ]);
+        });
+
+        it('opens on the nearest month in range and keeps arrow keys inside it', async () => {
+            render(<NepaliCalendar today={{ year: 2081, month: 1, day: 1 }} defaultScript="roman" min={min} />);
+            expect(title()).toBe('Shrawan 2081');
+
+            const first = screen.getByRole('button', { name: /, 10 Shrawan 2081$/ });
+            expect(first.getAttribute('tabindex')).toBe('0');
+            first.focus();
+            await userEvent.keyboard('{ArrowUp}');
+            expect(document.activeElement?.getAttribute('data-date')).toBe('2081-04-10');
+
+            await userEvent.click(screen.getByRole('button', { name: 'Today' }));
+            expect(title()).toBe('Shrawan 2081');
+        });
+    });
 });

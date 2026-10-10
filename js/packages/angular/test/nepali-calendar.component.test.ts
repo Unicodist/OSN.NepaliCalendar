@@ -1,4 +1,4 @@
-import { Component, provideZonelessChangeDetection } from '@angular/core';
+import { Component, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -17,6 +17,8 @@ const today: BsDate = { year: 2081, month: 4, day: 15 };
             [showAdDates]="showAdDates"
             [showScriptToggle]="showScriptToggle"
             [showTodayButton]="showTodayButton"
+            [min]="min"
+            [max]="max"
             (dateSelect)="picked = $event"
         />
     `,
@@ -29,6 +31,8 @@ class HostComponent {
     showAdDates = true;
     showScriptToggle = true;
     showTodayButton = true;
+    min: BsDate | null = null;
+    max: BsDate | null = null;
     picked: unknown = null;
 }
 
@@ -39,6 +43,16 @@ class HostComponent {
 class FormHostComponent {
     today = today;
     control = new FormControl<BsDate | null>({ year: 2082, month: 1, day: 1 });
+}
+
+@Component({
+    imports: [NepaliCalendarComponent, ReactiveFormsModule],
+    template: `<osn-nepali-calendar [today]="today" script="roman" [min]="min()" [formControl]="control" />`,
+})
+class RangeFormHostComponent {
+    today = today;
+    min = signal<BsDate | null>({ year: 2081, month: 4, day: 10 });
+    control = new FormControl<BsDate | null>({ year: 2081, month: 4, day: 5 });
 }
 
 beforeEach(() => {
@@ -229,5 +243,76 @@ describe('NepaliCalendarComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(find('Shukrabar, 5 Baisakh 2082').disabled).toBe(true);
+    });
+
+    describe('min and max', () => {
+        const min: BsDate = { year: 2081, month: 4, day: 10 };
+        const max: BsDate = { year: 2081, month: 6, day: 5 };
+        const day = (root: HTMLElement, key: string) =>
+            root.querySelector<HTMLButtonElement>(`.osn-cal__day[data-date="${key}"]`)!;
+
+        it('disables days outside the range and does not pick them', async () => {
+            const { host, root, stable } = await setup((h) => Object.assign(h, { script: 'roman', min, max }));
+
+            const before = day(root, '2081-04-09');
+            expect(before.disabled).toBe(true);
+            expect(before.classList.contains('osn-cal__day--disabled')).toBe(true);
+            before.click();
+            await stable();
+            expect(host.value).toBeNull();
+
+            day(root, '2081-04-10').click();
+            await stable();
+            expect(host.value).toEqual(min);
+        });
+
+        it('stops month navigation and limits the pickers to the range', async () => {
+            const { root, button, click, title } = await setup((h) => Object.assign(h, { script: 'roman', min, max }));
+
+            expect(button('Previous month').disabled).toBe(true);
+            await click('Next month');
+            await click('Next month');
+            expect(title()).toBe('Ashwin 2081');
+            expect(button('Next month').disabled).toBe(true);
+
+            const years = root.querySelector<HTMLSelectElement>('.osn-cal__select--year')!;
+            expect([...years.options].map((o) => o.value)).toEqual(['2081']);
+            const months = root.querySelector<HTMLSelectElement>('.osn-cal__select--month')!;
+            expect([...months.options].filter((o) => !o.disabled).map((o) => o.text.trim())).toEqual([
+                'Shrawan',
+                'Bhadra',
+                'Ashwin',
+            ]);
+        });
+
+        it('opens on the nearest month in range and keeps arrow keys inside it', async () => {
+            const { root, click, title, stable } = await setup((h) =>
+                Object.assign(h, { script: 'roman', min, today: { year: 2081, month: 1, day: 1 } }),
+            );
+            expect(title()).toBe('Shrawan 2081');
+
+            const first = day(root, '2081-04-10');
+            expect(first.getAttribute('tabindex')).toBe('0');
+            first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+            await stable();
+            expect(root.querySelector('.osn-cal__day[tabindex="0"]')?.getAttribute('data-date')).toBe('2081-04-10');
+
+            await click('Today');
+            expect(title()).toBe('Shrawan 2081');
+        });
+
+        it('reports a minDate error to forms and clears it when min changes', async () => {
+            const fixture = TestBed.createComponent(RangeFormHostComponent);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const { control } = fixture.componentInstance;
+
+            expect(control.errors).toEqual({ minDate: { min, actual: { year: 2081, month: 4, day: 5 } } });
+
+            fixture.componentInstance.min.set({ year: 2081, month: 4, day: 1 });
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(control.errors).toBeNull();
+        });
     });
 });

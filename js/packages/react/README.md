@@ -66,6 +66,23 @@ export function BirthdayPicker() {
 <NepaliCalendar defaultScript="roman" initialMonth={{ year: 2082, month: 1 }} />
 ```
 
+### Limit the dates that can be picked
+
+`min` and `max` are inclusive, and either can be left out. Days outside them are disabled, the
+arrows and arrow keys stop at them, and the year and month pickers only offer months in range.
+
+```tsx
+<NepaliCalendar min={{ year: 2082, month: 1, day: 1 }} max={{ year: 2082, month: 12, day: 30 }} />
+```
+
+To stop people picking a date in the future, pass today as `max`:
+
+```tsx
+import { todayBs } from '@opensourcenepal/nepali-calendar';
+
+<NepaliCalendar max={todayBs()} />;
+```
+
 ### Control the script yourself
 
 ```tsx
@@ -106,6 +123,8 @@ form:
 | `showAdDates`      | `boolean`                          | `true`                              | Shows the AD day under each BS day and the AD months in the header.           |
 | `showTodayButton`  | `boolean`                          | `true`                              | Shows the button that jumps back to today's month.                            |
 | `initialMonth`     | `{ year, month }`                  | the selection's month, else today's | The month shown first.                                                        |
+| `min`              | `BsDate \| null`                   |                                     | The earliest date that can be picked.                                         |
+| `max`              | `BsDate \| null`                   |                                     | The latest date that can be picked.                                           |
 | `today`            | `BsDate`                           | today, local time                   | Overrides today's date, for tests and server rendering.                       |
 | `className`        | `string`                           |                                     | Extra classes on the root element.                                            |
 
@@ -114,7 +133,7 @@ form:
 ## Keyboard
 
 Days are buttons, so Tab, Enter and Space work as usual. The arrow keys move between days, and
-across into the previous or next month.
+across into the previous or next month, but not past `min` or `max`.
 
 ## Styling
 
