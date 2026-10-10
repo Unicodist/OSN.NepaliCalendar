@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 
 namespace OSN.NepaliCalendar;
 
@@ -7,12 +6,26 @@ namespace OSN.NepaliCalendar;
 /// A date in the Nepali (Bikram Sambat) calendar.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Supported dates run from <see cref="MinValue"/> (BS 1970-01-01) to <see cref="MaxValue"/>
 /// (BS 2090-12-30), the range covered by the built-in calendar data. Every valid
 /// <see cref="NepaliDate"/> can be converted to and from a Gregorian date.
+/// </para>
+/// <para>
+/// A <see cref="NepaliDate"/> always holds a date that exists in the calendar: the constructors
+/// reject impossible dates such as BS 2081-01-32, and <c>default(NepaliDate)</c> is
+/// <see cref="MinValue"/> rather than an empty 0000-00-00. Use <see cref="TryCreate(int, int, int, out NepaliDate)"/>
+/// or <see cref="IsValid(int, int, int)"/> to check user input without catching exceptions.
+/// </para>
 /// </remarks>
-public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDate>, IComparable
+public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDate>, IComparable, IFormattable
 {
+    // Components are stored as offsets from MinValue so that default(NepaliDate) is a real date
+    // (BS 1970-01-01) instead of the non-existent 0000-00-00.
+    private readonly short _yearOffset;
+    private readonly byte _monthOffset;
+    private readonly byte _dayOffset;
+
     /// <summary>The earliest supported date, BS 1970-01-01 (AD 1913-04-13).</summary>
     public static readonly NepaliDate MinValue = new(BsCalendarData.MinYear, 1, 1);
 
@@ -36,9 +49,9 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
             throw new ArgumentOutOfRangeException(nameof(day), day, $"Day must be between 1 and {daysInMonth} for {year}-{month:D2}.");
         }
 
-        Year = year;
-        Month = month;
-        Day = day;
+        _yearOffset = (short)(year - BsCalendarData.MinYear);
+        _monthOffset = (byte)(month - 1);
+        _dayOffset = (byte)(day - 1);
     }
 
     /// <summary>
@@ -54,13 +67,13 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
     }
 
     /// <summary>Gets the BS year.</summary>
-    public int Year { get; }
+    public int Year => BsCalendarData.MinYear + _yearOffset;
 
     /// <summary>Gets the month number, from 1 (Baisakh) to 12 (Chaitra).</summary>
-    public int Month { get; }
+    public int Month => _monthOffset + 1;
 
     /// <summary>Gets the day of the month.</summary>
-    public int Day { get; }
+    public int Day => _dayOffset + 1;
 
     /// <summary>Gets the month as a <see cref="NepaliMonth"/>.</summary>
     public NepaliMonth NepaliMonth => (NepaliMonth)Month;
@@ -79,6 +92,38 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
     {
         ValidateYearAndMonth(year, month);
         return BsCalendarData.DaysInMonth(year, month);
+    }
+
+    /// <summary>
+    /// Returns whether a year, month and day form a date that exists in the supported range.
+    /// </summary>
+    /// <param name="year">The BS year.</param>
+    /// <param name="month">The month, from 1 (Baisakh) to 12 (Chaitra).</param>
+    /// <param name="day">The day of the month.</param>
+    /// <returns><see langword="true"/> if <c>new NepaliDate(year, month, day)</c> would succeed.</returns>
+    public static bool IsValid(int year, int month, int day) =>
+        BsCalendarData.IsSupportedYear(year)
+        && month >= 1 && month <= 12
+        && day >= 1 && day <= BsCalendarData.DaysInMonth(year, month);
+
+    /// <summary>
+    /// Creates a <see cref="NepaliDate"/> without throwing when the date does not exist.
+    /// </summary>
+    /// <param name="year">The BS year.</param>
+    /// <param name="month">The month, from 1 (Baisakh) to 12 (Chaitra).</param>
+    /// <param name="day">The day of the month.</param>
+    /// <param name="result">The date when this method returns <see langword="true"/>; otherwise <see cref="MinValue"/>.</param>
+    /// <returns><see langword="true"/> if the date exists; otherwise <see langword="false"/>.</returns>
+    public static bool TryCreate(int year, int month, int day, out NepaliDate result)
+    {
+        if (!IsValid(year, month, day))
+        {
+            result = default;
+            return false;
+        }
+
+        result = new NepaliDate(year, month, day);
+        return true;
     }
 
     /// <summary>
@@ -126,10 +171,47 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
     };
 
     /// <summary>
-    /// Returns the date in ISO-like <c>yyyy-MM-dd</c> form, for example <c>2081-01-01</c>.
+    /// Returns the date in ISO-like <c>yyyy-MM-dd</c> form with Latin digits, for example <c>2081-01-01</c>.
     /// </summary>
-    public override string ToString() =>
-        string.Format(CultureInfo.InvariantCulture, "{0:D4}-{1:D2}-{2:D2}", Year, Month, Day);
+    /// <remarks>The result does not depend on the current culture.</remarks>
+    public override string ToString() => ToString(null, null);
+
+    /// <summary>
+    /// Formats the date with Latin digits and Roman (transliterated) month and day names.
+    /// </summary>
+    /// <param name="format">A standard or custom format string; see <see cref="ToString(string?, IFormatProvider?)"/>.</param>
+    /// <returns>The formatted date.</returns>
+    /// <exception cref="FormatException"><paramref name="format"/> is not a valid format string.</exception>
+    public string ToString(string? format) => ToString(format, null);
+
+    /// <summary>
+    /// Formats the date in Roman (transliterated) or Nepali (Devanagari) script.
+    /// </summary>
+    /// <param name="format">
+    /// <para>A standard format, one of:</para>
+    /// <list type="table">
+    /// <item><term><c>d</c> (default)</term><description><c>yyyy-MM-dd</c>, e.g. <c>2081-04-15</c> or <c>२०८१-०४-१५</c>.</description></item>
+    /// <item><term><c>D</c></term><description><c>d MMMM yyyy</c>, e.g. <c>15 Shrawan 2081</c> or <c>१५ साउन २०८१</c>.</description></item>
+    /// <item><term><c>F</c></term><description><c>dddd, d MMMM yyyy</c>, e.g. <c>Budhabar, 15 Shrawan 2081</c> or <c>बुधबार, १५ साउन २०८१</c>.</description></item>
+    /// <item><term><c>M</c></term><description><c>d MMMM</c>, e.g. <c>15 Shrawan</c>.</description></item>
+    /// <item><term><c>Y</c></term><description><c>MMMM yyyy</c>, e.g. <c>Shrawan 2081</c>.</description></item>
+    /// </list>
+    /// <para>
+    /// or a custom format built from <c>yyyy</c>/<c>yy</c>/<c>y</c> (year), <c>MMMM</c> (month name),
+    /// <c>MM</c>/<c>M</c> (month number), <c>dddd</c>/<c>ddd</c> (full/short weekday name) and
+    /// <c>dd</c>/<c>d</c> (day). Text in single or double quotes, and a character after <c>\</c>, is
+    /// copied as is; prefix a one-letter custom format with <c>%</c>, as in <c>%d</c>.
+    /// </para>
+    /// </param>
+    /// <param name="formatProvider">
+    /// <see cref="NepaliDateFormatInfo.Nepali"/> or a Nepali culture (such as <c>ne-NP</c>) for Devanagari
+    /// digits and names; <see cref="NepaliDateFormatInfo.Roman"/>, any other culture or
+    /// <see langword="null"/> for Latin digits and Roman names.
+    /// </param>
+    /// <returns>The formatted date.</returns>
+    /// <exception cref="FormatException"><paramref name="format"/> is not a valid format string.</exception>
+    public string ToString(string? format, IFormatProvider? formatProvider) =>
+        NepaliDateFormatter.Format(this, format, NepaliDateFormatInfo.GetInstance(formatProvider));
 
     private static void ValidateYearAndMonth(int year, int month)
     {

@@ -96,9 +96,9 @@ public class NepaliDateConverterTests
     }
 
     [Fact]
-    public void ToGregorian_RejectsDefaultValue()
+    public void ToGregorian_DefaultValueIsMinValue()
     {
-        Assert.Throws<ArgumentException>(() => NepaliDateConverter.ToGregorian(default));
+        Assert.Equal(new DateTime(1913, 4, 13), NepaliDateConverter.ToGregorian(default));
     }
 
     [Fact]

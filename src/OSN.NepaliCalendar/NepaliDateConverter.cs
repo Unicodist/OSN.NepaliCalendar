@@ -34,17 +34,8 @@ public static class NepaliDateConverter
     /// </summary>
     /// <param name="date">The Nepali date.</param>
     /// <returns>The equivalent Gregorian date at midnight, with <see cref="DateTimeKind.Unspecified"/> kind.</returns>
-    /// <exception cref="ArgumentException"><paramref name="date"/> is <c>default(NepaliDate)</c>.</exception>
-    public static DateTime ToGregorian(NepaliDate date)
-    {
-        // Only default(NepaliDate) can bypass the constructor's validation.
-        if (!BsCalendarData.IsSupportedYear(date.Year))
-        {
-            throw new ArgumentException("The date is uninitialized.", nameof(date));
-        }
-
-        return BsCalendarData.Anchor.AddDays(BsCalendarData.ToDayNumber(date.Year, date.Month, date.Day));
-    }
+    public static DateTime ToGregorian(NepaliDate date) =>
+        BsCalendarData.Anchor.AddDays(BsCalendarData.ToDayNumber(date.Year, date.Month, date.Day));
 
 #if NET6_0_OR_GREATER
     /// <summary>
