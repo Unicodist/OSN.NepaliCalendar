@@ -71,6 +71,7 @@ class TwoWayBindingComponent {
 
 /** `[(value)]` and `[(script)]` bound to signals, mirrored below the calendar. */
 export const TwoWayBinding: Story = {
+    parameters: { controls: { disable: true } },
     render: () => ({
         moduleMetadata: { imports: [TwoWayBindingComponent] },
         template: '<story-two-way />',
@@ -97,6 +98,7 @@ class FormControlComponent {
 
 /** Used as a reactive form control, which can be disabled. */
 export const FormControlBinding: Story = {
+    parameters: { controls: { disable: true } },
     render: () => ({
         moduleMetadata: { imports: [FormControlComponent] },
         template: '<story-form-control />',

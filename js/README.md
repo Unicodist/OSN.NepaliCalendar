@@ -67,7 +67,7 @@ component also works with `ngModel` and `formControl`. Inputs and outputs: `[(va
 ## Theming
 
 The look comes from `.osn-cal*` classes and CSS custom properties on `.osn-cal`
-(`--osn-cal-accent`, `--osn-cal-bg`, `--osn-cal-radius`, ...). It follows the system dark mode;
+(`--osn-cal-accent`, `--osn-cal-bg`, `--osn-cal-radius`, ...); set `width` on `.osn-cal` to resize it. It follows the system dark mode;
 add `osn-cal--light` to keep it light.
 
 ## Storybook
