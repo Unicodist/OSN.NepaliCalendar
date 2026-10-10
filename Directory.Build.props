@@ -16,8 +16,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Authors>Unicodist</Authors>
-    <Copyright>Copyright (c) Unicodist</Copyright>
+    <Authors>ContentX</Authors>
+    <Copyright>Copyright (c) ContentX</Copyright>
     <RepositoryUrl>https://github.com/Unicodist/OSN.NepaliCalendar</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/Unicodist/OSN.NepaliCalendar</PackageProjectUrl>
