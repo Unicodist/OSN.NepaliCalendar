@@ -41,6 +41,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build Storybooks
+        run: npm run build-storybook
+
       - name: Smoke-test the built core package
         run: >-
           node --input-type=module -e "
@@ -61,3 +64,11 @@ jobs:
         with:
           name: npm-packages
           path: artifacts/*.tgz
+
+      - name: Upload Storybooks
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybooks
+          path: |
+            js/packages/react/storybook-static
+            js/packages/angular/storybook-static

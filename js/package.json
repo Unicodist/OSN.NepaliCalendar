@@ -15,7 +15,8 @@
     "build": "npm run build --workspaces",
     "test": "npm test --workspaces",
     "typecheck": "npm run typecheck --workspaces",
-    "lint": "prettier --check ."
+    "lint": "prettier --check .",
+    "build-storybook": "npm run build-storybook -w packages/react -w packages/angular"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
