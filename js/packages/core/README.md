@@ -127,8 +127,9 @@ pickers and range limits.
 
 ## Stylesheet
 
-`@opensourcenepal/nepali-calendar/styles.css` styles the React and Angular calendar components.
-See their READMEs for how to include and theme it.
+`@opensourcenepal/nepali-calendar/styles.css` styles the React and Angular calendar components. Both
+component packages also ship a copy, so their users don't need to install this package. See their
+READMEs for how to include and theme it.
 
 ## Accuracy
 

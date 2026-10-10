@@ -59,7 +59,7 @@ export class Example {
 }
 ```
 
-Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar/styles.css"]`). The
+Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar-angular/styles.css"]`). The
 component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
 `[(script)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `today`.

@@ -16,7 +16,7 @@ npm install @opensourcenepal/nepali-calendar-react
 ```
 
 This also installs [`@opensourcenepal/nepali-calendar`](https://www.npmjs.com/package/@opensourcenepal/nepali-calendar),
-which handles conversion and formatting. With pnpm or another strict package manager, install it
+which handles conversion and formatting, so you don't need to install or upgrade it yourself. With pnpm or another strict package manager, install it
 directly too if you import from it, as some examples below do.
 
 ## Getting started

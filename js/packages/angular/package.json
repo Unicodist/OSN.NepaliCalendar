@@ -20,8 +20,11 @@
     "date-picker",
     "angular"
   ],
+  "exports": {
+    "./styles.css": "./styles.css"
+  },
   "scripts": {
-    "build": "ng-packagr -p ng-package.json -c tsconfig.lib.json",
+    "build": "cp ../core/styles.css styles.css && ng-packagr -p ng-package.json -c tsconfig.lib.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "storybook": "storybook dev -p 6007",

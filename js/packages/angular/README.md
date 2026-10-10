@@ -17,25 +17,23 @@ npm install @opensourcenepal/nepali-calendar-angular
 ```
 
 This also installs [`@opensourcenepal/nepali-calendar`](https://www.npmjs.com/package/@opensourcenepal/nepali-calendar),
-which handles conversion and formatting and provides the stylesheet.
+which handles conversion and formatting, so you don't need to install or upgrade it yourself. With pnpm or
+another strict package manager, install it directly too if you import from it, as some examples below do.
 
 Add the stylesheet to `angular.json` under `projects.<app>.architect.build.options.styles`:
 
 ```json
 "styles": [
   "src/styles.css",
-  "node_modules/@opensourcenepal/nepali-calendar/styles.css"
+  "node_modules/@opensourcenepal/nepali-calendar-angular/styles.css"
 ]
 ```
 
 or import it from your global stylesheet:
 
 ```css
-@import '@opensourcenepal/nepali-calendar/styles.css';
+@import '@opensourcenepal/nepali-calendar-angular/styles.css';
 ```
-
-With pnpm or another strict package manager, also install `@opensourcenepal/nepali-calendar`
-directly so the stylesheet path resolves.
 
 ## Getting started
 
