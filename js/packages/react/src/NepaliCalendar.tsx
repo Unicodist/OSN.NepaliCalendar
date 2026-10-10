@@ -17,7 +17,7 @@ import {
     toAd,
     toDigits,
     todayBs,
-} from '@osn/nepali-calendar';
+} from '@opensourcenepal/nepali-calendar';
 
 export interface NepaliCalendarProps {
     /** The selected BS date. Pass it with `onChange` to control the selection. */

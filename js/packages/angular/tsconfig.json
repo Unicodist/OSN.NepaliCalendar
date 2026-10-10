@@ -5,7 +5,7 @@
     "useDefineForClassFields": false,
     "types": ["node"],
     "paths": {
-      "@osn/nepali-calendar": ["../core/src/index.ts"]
+      "@opensourcenepal/nepali-calendar": ["../core/src/index.ts"]
     }
   },
   "angularCompilerOptions": {

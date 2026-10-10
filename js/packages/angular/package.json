@@ -1,5 +1,5 @@
 {
-  "name": "@osn/nepali-calendar-angular",
+  "name": "@opensourcenepal/nepali-calendar-angular",
   "version": "0.1.0",
   "description": "Angular month-view calendar and date picker for Nepali (Bikram Sambat) dates, with AD dates alongside.",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@osn/nepali-calendar": "0.1.0",
+    "@opensourcenepal/nepali-calendar": "0.1.0",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
