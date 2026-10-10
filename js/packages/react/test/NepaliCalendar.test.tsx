@@ -8,8 +8,14 @@ const today: BsDate = { year: 2081, month: 4, day: 15 };
 
 afterEach(cleanup);
 
+function shownMonth(root: ParentNode = document) {
+    const pick = (cls: string) =>
+        root.querySelector<HTMLSelectElement>(`.osn-cal__select--${cls}`)?.selectedOptions[0]?.text.trim();
+    return `${pick('month')} ${pick('year')}`;
+}
+
 function title() {
-    return document.querySelector('.osn-cal__title-bs')?.textContent;
+    return shownMonth();
 }
 
 describe('NepaliCalendar', () => {
@@ -54,6 +60,29 @@ describe('NepaliCalendar', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Today' }));
         expect(title()).toBe('Shrawan 2081');
+    });
+
+    it('jumps straight to a year and month with the pickers', async () => {
+        render(<NepaliCalendar today={today} defaultScript="roman" />);
+
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Year' }), '2045');
+        expect(title()).toBe('Shrawan 2045');
+
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Month' }), 'Chaitra');
+        expect(title()).toBe('Chaitra 2045');
+        expect(screen.getByRole('button', { name: /, 1 Chaitra 2045$/ })).toBeTruthy();
+
+        const years = screen.getByRole('combobox', { name: 'Year' }) as HTMLSelectElement;
+        expect(years.options).toHaveLength(121);
+        expect(years.options[0]?.value).toBe('1970');
+        expect(years.options[120]?.value).toBe('2090');
+    });
+
+    it('shows the pickers in Nepali script', () => {
+        render(<NepaliCalendar today={today} />);
+
+        expect(title()).toBe('साउन २०८१');
+        expect(screen.getByRole('combobox', { name: 'साल' })).toBeTruthy();
     });
 
     it('reports the picked BS and AD dates', async () => {

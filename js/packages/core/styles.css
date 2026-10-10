@@ -50,6 +50,29 @@
     font-size: 1rem;
 }
 
+.osn-cal__select {
+    margin: 0 0.125rem;
+    padding: 0.125rem 0.25rem;
+    border: 1px solid transparent;
+    border-radius: calc(var(--osn-cal-radius) - 2px);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.osn-cal__select:hover,
+.osn-cal__select:focus-visible {
+    border-color: var(--osn-cal-border);
+    background: var(--osn-cal-hover);
+}
+
+.osn-cal__select option {
+    background: var(--osn-cal-bg);
+    color: var(--osn-cal-fg);
+    font-weight: normal;
+}
+
 .osn-cal__title-ad {
     display: block;
     color: var(--osn-cal-muted);
