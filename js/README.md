@@ -70,6 +70,21 @@ The look comes from `.osn-cal*` classes and CSS custom properties on `.osn-cal`
 (`--osn-cal-accent`, `--osn-cal-bg`, `--osn-cal-radius`, ...). It follows the system dark mode;
 add `osn-cal--light` to keep it light.
 
+## Storybook
+
+Each component has a Storybook with stories for both scripts, a selected date, the year and
+month pickers, the ends of the range, a minimal layout, theming, and two-way binding (plus
+reactive forms for Angular):
+
+```shell
+cd js
+npm run storybook -w packages/react     # http://localhost:6006
+npm run storybook -w packages/angular   # http://localhost:6007
+npm run build-storybook                 # static builds in packages/*/storybook-static
+```
+
+CI builds both and uploads them as the `storybooks` artifact.
+
 ## Developing
 
 Requires Node 22.22.3+ or 24.15+ and npm 11.

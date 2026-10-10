@@ -7,3 +7,4 @@ dist/
 coverage/
 .angular/
 *.tsbuildinfo
+storybook-static/

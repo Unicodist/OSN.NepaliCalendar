@@ -7,5 +7,5 @@
       "@opensourcenepal/nepali-calendar": ["../core/src/index.ts"]
     }
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "stories", ".storybook"]
 }
