@@ -1,0 +1,26 @@
+{
+  "name": "osn-nepali-calendar-js",
+  "private": true,
+  "description": "JavaScript packages for the OSN Nepali (Bikram Sambat) calendar: a TypeScript core and React and Angular components.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/core",
+    "packages/react",
+    "packages/angular"
+  ],
+  "engines": {
+    "node": "^22.22.3 || >=24.15.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm test --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "~6.0.0",
+    "vitest": "^4.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

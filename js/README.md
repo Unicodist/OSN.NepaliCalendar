@@ -1,0 +1,86 @@
+# OSN Nepali Calendar for JavaScript
+
+npm workspaces with the JavaScript side of OSN.NepaliCalendar:
+
+| Package                                            | What it is                                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`@osn/nepali-calendar`](packages/core)            | Framework-free TypeScript core: AD/BS conversion, validation, Roman and Devanagari names and formatting, and the month grid the components draw. |
+| [`@osn/nepali-calendar-react`](packages/react)     | `<NepaliCalendar>` for React 18+.                                                                                                                |
+| [`@osn/nepali-calendar-angular`](packages/angular) | `<osn-nepali-calendar>` for Angular 22, usable with `[(value)]` or as a form control.                                                            |
+
+Both components show a BS month with each AD day under its BS day and the AD months in the
+header, switch between Nepali and Roman script, move between months (and with the arrow keys
+between days), jump back to today, and let the user pick a day. They cover the same range as the
+.NET library, BS 1970 to BS 2090, from the same month-length table: a test fails if
+`packages/core/src/month-lengths.ts` and `src/OSN.NepaliCalendar/BsCalendarData.cs` drift apart.
+
+## Core
+
+```ts
+import { toBs, toAd, formatBs, daysInMonth, isValidBsDate } from '@osn/nepali-calendar';
+
+const bs = toBs(new Date(2025, 9, 2)); // { year: 2082, month: 6, day: 16 }, read in local time
+toAd({ year: 2082, month: 1, day: 1 }); // { year: 2025, month: 4, day: 14 }
+formatBs(bs, 'D'); // 16 Ashwin 2082
+formatBs(bs, 'F', 'nepali'); // बिहीबार, १६ असोज २०८२
+daysInMonth(2081, 2); // 32
+isValidBsDate(2081, 1, 32); // false
+```
+
+`formatBs` takes the same standard (`d`, `D`, `F`, `M`, `Y`) and custom (`yyyy`, `MMMM`, `dddd`,
+...) formats as `NepaliDate.ToString` in .NET.
+
+## React
+
+```tsx
+import { NepaliCalendar, type BsDate } from '@osn/nepali-calendar-react';
+import '@osn/nepali-calendar-react/styles.css';
+
+function Example() {
+    const [date, setDate] = useState<BsDate | null>(null);
+    return <NepaliCalendar value={date} onChange={(bs, ad) => setDate(bs)} defaultScript="nepali" />;
+}
+```
+
+Props: `value`/`defaultValue`/`onChange(bs, ad)`, `script`/`defaultScript`/`onScriptChange`,
+`showScriptToggle`, `showAdDates`, `showTodayButton`, `initialMonth`, `today`, `className`.
+
+## Angular
+
+```ts
+import { NepaliCalendarComponent, type BsDate } from '@osn/nepali-calendar-angular';
+
+@Component({
+    imports: [NepaliCalendarComponent],
+    template: `<osn-nepali-calendar [(value)]="date" script="roman" (dateSelect)="log($event.ad)" />`,
+})
+export class Example {
+    date: BsDate | null = null;
+}
+```
+
+Add the stylesheet to `angular.json` (`"styles": ["@osn/nepali-calendar/styles.css"]`). The
+component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
+`[(script)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showAdDates`,
+`showTodayButton`, `initialMonth`, `today`.
+
+## Theming
+
+The look comes from `.osn-cal*` classes and CSS custom properties on `.osn-cal`
+(`--osn-cal-accent`, `--osn-cal-bg`, `--osn-cal-radius`, ...). It follows the system dark mode;
+add `osn-cal--light` to keep it light.
+
+## Developing
+
+Requires Node 22.22.3+ or 24.15+ and npm 11.
+
+```shell
+cd js
+npm install
+npm test           # Vitest for all three packages
+npm run build      # core and React with tsc, Angular with ng-packagr (into packages/angular/dist)
+npm run typecheck
+npm run lint       # Prettier
+```
+
+The packages are not published to npm yet.

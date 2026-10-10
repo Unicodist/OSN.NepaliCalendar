@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["node"],
+    "paths": {
+      "@osn/nepali-calendar": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}
