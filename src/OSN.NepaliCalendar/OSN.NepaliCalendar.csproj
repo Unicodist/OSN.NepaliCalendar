@@ -13,6 +13,7 @@
     <Description>Nepali (Bikram Sambat) calendar utilities for .NET: represent Nepali dates, format them in various styles, and convert between AD and BS.</Description>
     <PackageTags>nepali;calendar;bikram-sambat;bs;ad;date;conversion;nepal</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -22,6 +23,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
