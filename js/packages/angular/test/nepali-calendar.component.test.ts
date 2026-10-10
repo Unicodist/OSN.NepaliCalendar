@@ -49,6 +49,12 @@ afterEach(() => {
     TestBed.resetTestingModule();
 });
 
+function shownMonth(root: ParentNode = document) {
+    const pick = (cls: string) =>
+        root.querySelector<HTMLSelectElement>(`.osn-cal__select--${cls}`)?.selectedOptions[0]?.text.trim();
+    return `${pick('month')} ${pick('year')}`;
+}
+
 async function setup(configure: (host: HostComponent) => void = () => {}) {
     const fixture = TestBed.createComponent(HostComponent);
     configure(fixture.componentInstance);
@@ -70,7 +76,7 @@ async function setup(configure: (host: HostComponent) => void = () => {}) {
         button(name).click();
         await stable();
     };
-    const title = () => root.querySelector('.osn-cal__title-bs')?.textContent;
+    const title = () => shownMonth(root);
     return { fixture, host: fixture.componentInstance, root, button, click, title, stable };
 }
 
@@ -114,6 +120,38 @@ describe('NepaliCalendarComponent', () => {
 
         await click('Today');
         expect(title()).toBe('Shrawan 2081');
+    });
+
+    it('jumps straight to a year and month with the pickers', async () => {
+        const { root, title, stable, button } = await setup((h) => (h.script = 'roman'));
+        const select = (name: string) => root.querySelector<HTMLSelectElement>(`select[aria-label="${name}"]`)!;
+        const choose = async (name: string, value: string) => {
+            select(name).value = value;
+            select(name).dispatchEvent(new Event('change'));
+            await stable();
+        };
+
+        await choose('Year', '2045');
+        expect(title()).toBe('Shrawan 2045');
+
+        await choose('Month', '12');
+        expect(title()).toBe('Chaitra 2045');
+        expect(
+            [...root.querySelectorAll('.osn-cal__day')].some((b) =>
+                b.getAttribute('aria-label')?.endsWith(', 1 Chaitra 2045'),
+            ),
+        ).toBe(true);
+
+        expect(select('Year').options).toHaveLength(121);
+        expect(select('Year').options[0]?.value).toBe('1970');
+        expect(select('Year').options[120]?.value).toBe('2090');
+
+        // Month navigation keeps the pickers in step.
+        await choose('Year', '2090');
+        expect(button('Next month').disabled).toBe(true);
+        button('Previous month').click();
+        await stable();
+        expect(title()).toBe('Falgun 2090');
     });
 
     it('binds the picked date two ways and reports its AD date', async () => {
@@ -183,7 +221,7 @@ describe('NepaliCalendarComponent', () => {
         const root: HTMLElement = fixture.nativeElement;
         const find = (label: string) => root.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 
-        expect(root.querySelector('.osn-cal__title-bs')?.textContent).toBe('Baisakh 2082');
+        expect(shownMonth(root)).toBe('Baisakh 2082');
         find('Shukrabar, 5 Baisakh 2082').click();
         expect(fixture.componentInstance.control.value).toEqual({ year: 2082, month: 1, day: 5 });
 

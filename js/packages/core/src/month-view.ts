@@ -102,3 +102,8 @@ export function shiftMonth(year: number, month: number, delta: number): { year: 
         return delta < 0 ? { year: MIN_YEAR, month: 1 } : { year: MAX_YEAR, month: 12 };
     }
 }
+
+/** Every supported BS year, in order, for a year picker. */
+export function supportedYears(): number[] {
+    return Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
+}

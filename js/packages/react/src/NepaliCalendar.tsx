@@ -4,6 +4,7 @@ import {
     type AdDate,
     type BsDate,
     DAY_NAMES,
+    MONTH_NAMES,
     MAX_DATE,
     MIN_DATE,
     type MonthViewDay,
@@ -14,6 +15,7 @@ import {
     isSameBs,
     monthName,
     shiftMonth,
+    supportedYears,
     toAd,
     toDigits,
     todayBs,
@@ -45,6 +47,8 @@ export interface NepaliCalendarProps {
     /** Extra class names for the root element. */
     className?: string;
 }
+
+const YEARS = supportedYears();
 
 const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
 
@@ -109,6 +113,11 @@ export function NepaliCalendar({
         setVisible(shiftMonth(visible.year, visible.month, delta));
     };
 
+    const jumpTo = (year: number, month: number) => {
+        setFocused(null);
+        setVisible({ year, month });
+    };
+
     const goToToday = () => {
         setFocused(null);
         setVisible({ year: today.year, month: today.month });
@@ -142,9 +151,38 @@ export function NepaliCalendar({
                 >
                     ‹
                 </button>
-                <div className="osn-cal__title" aria-live="polite">
-                    <span className="osn-cal__title-bs">{title}</span>
-                    {showAdDates && <span className="osn-cal__title-ad">{view.adLabel}</span>}
+                <div className="osn-cal__title">
+                    <span className="osn-cal__title-bs">
+                        <select
+                            className="osn-cal__select osn-cal__select--month"
+                            aria-label={nepali ? 'महिना' : 'Month'}
+                            value={view.month}
+                            onChange={(event) => jumpTo(view.year, Number(event.target.value))}
+                        >
+                            {MONTH_NAMES[activeScript].map((name, i) => (
+                                <option key={i} value={i + 1}>
+                                    {name}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            className="osn-cal__select osn-cal__select--year"
+                            aria-label={nepali ? 'साल' : 'Year'}
+                            value={view.year}
+                            onChange={(event) => jumpTo(Number(event.target.value), view.month)}
+                        >
+                            {YEARS.map((year) => (
+                                <option key={year} value={year}>
+                                    {toDigits(year, activeScript)}
+                                </option>
+                            ))}
+                        </select>
+                    </span>
+                    {showAdDates && (
+                        <span className="osn-cal__title-ad" aria-live="polite">
+                            {view.adLabel}
+                        </span>
+                    )}
                 </div>
                 <button
                     type="button"

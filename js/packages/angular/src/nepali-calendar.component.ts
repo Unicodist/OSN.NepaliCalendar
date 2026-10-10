@@ -21,6 +21,7 @@ import {
     type AdDate,
     type BsDate,
     DAY_NAMES,
+    MONTH_NAMES,
     MAX_DATE,
     MIN_DATE,
     type MonthViewDay,
@@ -31,6 +32,7 @@ import {
     isSameBs,
     monthName,
     shiftMonth,
+    supportedYears,
     toAd,
     toDigits,
     todayBs,
@@ -64,10 +66,31 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
             >
                 ‹
             </button>
-            <div class="osn-cal__title" aria-live="polite">
-                <span class="osn-cal__title-bs">{{ title() }}</span>
+            <div class="osn-cal__title">
+                <span class="osn-cal__title-bs">
+                    <select
+                        class="osn-cal__select osn-cal__select--month"
+                        [attr.aria-label]="nepali() ? 'महिना' : 'Month'"
+                        [disabled]="disabled()"
+                        (change)="jumpTo(view().year, +$any($event.target).value)"
+                    >
+                        @for (name of monthNames(); track $index) {
+                            <option [value]="$index + 1" [selected]="$index + 1 === view().month">{{ name }}</option>
+                        }
+                    </select>
+                    <select
+                        class="osn-cal__select osn-cal__select--year"
+                        [attr.aria-label]="nepali() ? 'साल' : 'Year'"
+                        [disabled]="disabled()"
+                        (change)="jumpTo(+$any($event.target).value, view().month)"
+                    >
+                        @for (year of years; track year) {
+                            <option [value]="year" [selected]="year === view().year">{{ digits(year) }}</option>
+                        }
+                    </select>
+                </span>
                 @if (showAdDates) {
-                    <span class="osn-cal__title-ad">{{ view().adLabel }}</span>
+                    <span class="osn-cal__title-ad" aria-live="polite">{{ view().adLabel }}</span>
                 }
             </div>
             <button
@@ -209,6 +232,8 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
     protected readonly nepali = computed(() => this.activeScript() === 'nepali');
     protected readonly weekdays = computed(() => ABBREVIATED_DAY_NAMES[this.activeScript()]);
     protected readonly weekdayNames = computed(() => DAY_NAMES[this.activeScript()]);
+    protected readonly monthNames = computed(() => MONTH_NAMES[this.activeScript()]);
+    protected readonly years = supportedYears();
 
     protected readonly view = computed(() => {
         const visible = this.visible() ?? this.selected() ?? this.todayDate();
@@ -274,6 +299,11 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor 
         const view = this.view();
         this.focused.set(null);
         this.visible.set(shiftMonth(view.year, view.month, delta));
+    }
+
+    protected jumpTo(year: number, month: number): void {
+        this.focused.set(null);
+        this.visible.set({ year, month });
     }
 
     protected goToToday(): void {
