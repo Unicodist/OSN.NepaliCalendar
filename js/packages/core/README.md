@@ -119,11 +119,24 @@ import { buildMonthView } from '@opensourcenepal/nepali-calendar';
 const view = buildMonthView(2082, 6, { selected: { year: 2082, month: 6, day: 16 } });
 view.adLabel; // 'Sep/Oct 2025'
 view.weeks; // 5 rows of 7; null pads the days outside the month
-view.weeks[0][3]; // the 1st: bs 2082-06-01, ad 2025-09-17, dayOfWeek 3, plus isToday, isSelected and key
+view.weeks[0][3]; // the 1st: bs 2082-06-01, ad 2025-09-17, dayOfWeek 3, plus isToday, isSelected, isDisabled and key
 ```
 
-`supportedYears()`, `shiftMonth()`, `MIN_DATE`, `MAX_DATE`, `MIN_YEAR` and `MAX_YEAR` help with
-pickers and range limits.
+Pass `min` and/or `max` to mark the days outside them as `isDisabled` and to have `hasPrevious` and
+`hasNext` stop at their months. The same `{ min, max }` range works with the helpers for pickers:
+
+```ts
+import { clampBs, isInRange, shiftMonth, supportedYears } from '@opensourcenepal/nepali-calendar';
+
+const range = { min: { year: 2082, month: 1, day: 1 }, max: { year: 2082, month: 12, day: 30 } };
+isInRange({ year: 2081, month: 12, day: 30 }, range); // false
+clampBs({ year: 2081, month: 12, day: 30 }, range); // { year: 2082, month: 1, day: 1 }
+shiftMonth(2082, 12, 1, range); // { year: 2082, month: 12 }
+supportedYears(range); // [2082]
+```
+
+`clampMonth()`, `isMonthInRange()`, `MIN_DATE`, `MAX_DATE`, `MIN_YEAR` and `MAX_YEAR` are there
+too. Without a range, the helpers use the supported range.
 
 ## Stylesheet
 

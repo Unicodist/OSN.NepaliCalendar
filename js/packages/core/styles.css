@@ -158,8 +158,13 @@
     line-height: 1.1;
 }
 
-.osn-cal__day:hover {
+.osn-cal__day:hover:not(:disabled) {
     background: var(--osn-cal-hover);
+}
+
+.osn-cal__day:disabled {
+    opacity: 0.35;
+    cursor: default;
 }
 
 .osn-cal__day:focus-visible {

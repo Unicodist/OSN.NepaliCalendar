@@ -3,7 +3,7 @@ import {
     type BsDate,
     MAX_YEAR,
     MIN_YEAR,
-    addMonths,
+    compareBs,
     daysInMonth,
     dayOfWeek,
     isSameBs,
@@ -21,6 +21,8 @@ export interface MonthViewDay {
     readonly key: string;
     readonly isToday: boolean;
     readonly isSelected: boolean;
+    /** Whether the day is before `min` or after `max`, so it cannot be picked. */
+    readonly isDisabled: boolean;
 }
 
 /** A BS month laid out as weeks starting on Sunday, ready to render as a grid. */
@@ -35,7 +37,13 @@ export interface MonthView {
     readonly hasNext: boolean;
 }
 
-export interface MonthViewOptions {
+/** The earliest and latest dates a user may pick. Either end may be left open. */
+export interface DateRange {
+    readonly min?: BsDate | null;
+    readonly max?: BsDate | null;
+}
+
+export interface MonthViewOptions extends DateRange {
     readonly today?: BsDate | null;
     readonly selected?: BsDate | null;
     readonly script?: Script;
@@ -61,6 +69,7 @@ export function buildMonthView(year: number, month: number, options: MonthViewOp
             key: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
             isToday: isSameBs(bs, options.today),
             isSelected: isSameBs(bs, options.selected),
+            isDisabled: !isInRange(bs, options),
         });
     }
     while (cells.length % 7 !== 0) {
@@ -77,8 +86,8 @@ export function buildMonthView(year: number, month: number, options: MonthViewOp
         month,
         weeks,
         adLabel: adSpanLabel(firstAd, lastAd, options.script ?? 'roman'),
-        hasPrevious: year > MIN_YEAR || month > 1,
-        hasNext: year < MAX_YEAR || month < 12,
+        hasPrevious: monthIndex(year, month) > lowestMonth(options),
+        hasNext: monthIndex(year, month) < highestMonth(options),
     };
 }
 
@@ -94,16 +103,60 @@ function adSpanLabel(first: AdDate, last: AdDate, script: Script): string {
     return first.month === last.month ? `${firstMonth} ${firstYear}` : `${firstMonth}/${lastMonth} ${firstYear}`;
 }
 
-/** Moves a year and month by `delta` months, clamped to the supported range. */
-export function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
-    try {
-        return addMonths(year, month, delta);
-    } catch {
-        return delta < 0 ? { year: MIN_YEAR, month: 1 } : { year: MAX_YEAR, month: 12 };
-    }
+/** Moves a year and month by `delta` months, clamped to the supported range and to `range`. */
+export function shiftMonth(
+    year: number,
+    month: number,
+    delta: number,
+    range: DateRange = {},
+): { year: number; month: number } {
+    return clampMonth(year, month + delta, range);
 }
 
-/** Every supported BS year, in order, for a year picker. */
-export function supportedYears(): number[] {
-    return Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
+/**
+ * Brings a year and month inside the supported range and `range`. The month may overflow, so
+ * `clampMonth(2081, 13)` is Baisakh 2082.
+ */
+export function clampMonth(year: number, month: number, range: DateRange = {}): { year: number; month: number } {
+    const index = Math.min(Math.max(monthIndex(year, month), lowestMonth(range)), highestMonth(range));
+    return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
+/** Whether any day of a month lies inside the supported range and `range`. */
+export function isMonthInRange(year: number, month: number, range: DateRange = {}): boolean {
+    const index = monthIndex(year, month);
+    return index >= lowestMonth(range) && index <= highestMonth(range);
+}
+
+/** Whether a date lies inside `range`. Both ends are inclusive and either may be left open. */
+export function isInRange(date: BsDate, range: DateRange = {}): boolean {
+    return (!range.min || compareBs(date, range.min) >= 0) && (!range.max || compareBs(date, range.max) <= 0);
+}
+
+/** Moves a date to the nearest end of `range` when it falls outside it. */
+export function clampBs(date: BsDate, range: DateRange = {}): BsDate {
+    if (range.min && compareBs(date, range.min) < 0) return range.min;
+    if (range.max && compareBs(date, range.max) > 0) return range.max;
+    return date;
+}
+
+/** Every supported BS year that has a day inside `range`, in order, for a year picker. */
+export function supportedYears(range: DateRange = {}): number[] {
+    const first = Math.floor(lowestMonth(range) / 12);
+    const last = Math.floor(highestMonth(range) / 12);
+    return Array.from({ length: Math.max(last - first + 1, 0) }, (_, i) => first + i);
+}
+
+function monthIndex(year: number, month: number): number {
+    return year * 12 + month - 1;
+}
+
+function lowestMonth({ min }: DateRange): number {
+    const lowest = monthIndex(MIN_YEAR, 1);
+    return min ? Math.max(monthIndex(min.year, min.month), lowest) : lowest;
+}
+
+function highestMonth({ max }: DateRange): number {
+    const highest = monthIndex(MAX_YEAR, 12);
+    return max ? Math.min(monthIndex(max.year, max.month), highest) : highest;
 }

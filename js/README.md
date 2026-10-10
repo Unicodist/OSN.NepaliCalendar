@@ -43,7 +43,7 @@ function Example() {
 ```
 
 Props: `value`/`defaultValue`/`onChange(bs, ad)`, `script`/`defaultScript`/`onScriptChange`,
-`showScriptToggle`, `showAdDates`, `showTodayButton`, `initialMonth`, `today`, `className`.
+`showScriptToggle`, `showAdDates`, `showTodayButton`, `initialMonth`, `min`, `max`, `today`, `className`.
 
 ## Angular
 
@@ -62,7 +62,7 @@ export class Example {
 Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar-angular/styles.css"]`). The
 component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
 `[(script)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showAdDates`,
-`showTodayButton`, `initialMonth`, `today`.
+`showTodayButton`, `initialMonth`, `min`, `max` (with `minDate`/`maxDate` form errors), `today`.
 
 ## Theming
 

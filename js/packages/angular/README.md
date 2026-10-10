@@ -90,6 +90,36 @@ export class ProfileForm {
 
 `dateOfBirth.disable()` disables picking a day, the month navigation and the dropdowns.
 
+### Limit the dates that can be picked
+
+`min` and `max` are inclusive, and either can be left out. Days outside them are disabled, the
+arrows and arrow keys stop at them, and the year and month pickers only offer months in range.
+
+```html
+<osn-nepali-calendar [min]="{ year: 2082, month: 1, day: 1 }" [max]="{ year: 2082, month: 12, day: 30 }" />
+```
+
+In a form, a value outside the range (set from code, or left over after `min` or `max` changed)
+makes the control invalid with a `minDate` or `maxDate` error:
+
+```ts
+@Component({
+    imports: [NepaliCalendarComponent, ReactiveFormsModule],
+    template: `
+        <osn-nepali-calendar [max]="today" [formControl]="dateOfBirth" />
+        @if (dateOfBirth.hasError('maxDate')) {
+            <p>The date of birth can't be in the future.</p>
+        }
+    `,
+})
+export class ProfileForm {
+    readonly today = todayBs(); // from @opensourcenepal/nepali-calendar
+    readonly dateOfBirth = new FormControl<BsDate | null>(null);
+}
+```
+
+The error value is `{ min, actual }` or `{ max, actual }`.
+
 ### Template-driven forms
 
 Import `FormsModule`, then:
@@ -129,6 +159,8 @@ Import `FormsModule`, then:
 | `showAdDates`      | `boolean`                    | `true`                              | Shows the AD day under each BS day and the AD months in the header. |
 | `showTodayButton`  | `boolean`                    | `true`                              | Shows the button that jumps back to today's month.                  |
 | `initialMonth`     | `{ year, month } \| null`    | the selection's month, else today's | The month shown first.                                              |
+| `min`              | `BsDate \| null`             | `null`                              | The earliest date that can be picked.                               |
+| `max`              | `BsDate \| null`             | `null`                              | The latest date that can be picked.                                 |
 | `today`            | `BsDate`                     | today, local time                   | Overrides today's date, for tests and server rendering.             |
 
 `BsDate` and `AdDate` are `{ year, month, day }` with months from 1 to 12. The boolean inputs
@@ -137,7 +169,7 @@ also accept attribute form, such as `showAdDates="false"`.
 ## Keyboard
 
 Days are buttons, so Tab, Enter and Space work as usual. The arrow keys move between days, and
-across into the previous or next month.
+across into the previous or next month, but not past `min` or `max`.
 
 ## Styling
 

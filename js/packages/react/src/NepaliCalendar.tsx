@@ -4,6 +4,7 @@ import {
     type AdDate,
     type BsDate,
     DAY_NAMES,
+    type DateRange,
     MONTH_NAMES,
     MAX_DATE,
     MIN_DATE,
@@ -11,6 +12,9 @@ import {
     type Script,
     addDays,
     buildMonthView,
+    clampBs,
+    clampMonth,
+    isMonthInRange,
     formatBs,
     isSameBs,
     monthName,
@@ -42,13 +46,15 @@ export interface NepaliCalendarProps {
     showTodayButton?: boolean;
     /** The month shown first. Defaults to the month of the selection, or of today. */
     initialMonth?: { year: number; month: number };
+    /** The earliest BS date the user can pick. Earlier days are disabled and navigation stops at its month. */
+    min?: BsDate | null;
+    /** The latest BS date the user can pick. Later days are disabled and navigation stops at its month. */
+    max?: BsDate | null;
     /** Today's BS date. Defaults to today in local time; mainly useful for tests and server rendering. */
     today?: BsDate;
     /** Extra class names for the root element. */
     className?: string;
 }
-
-const YEARS = supportedYears();
 
 const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
 
@@ -64,6 +70,8 @@ export function NepaliCalendar({
     showAdDates = true,
     showTodayButton = true,
     initialMonth,
+    min = null,
+    max = null,
     today: todayProp,
     className,
 }: NepaliCalendarProps) {
@@ -76,6 +84,10 @@ export function NepaliCalendar({
     const start = initialMonth ?? selected ?? today;
     const [visible, setVisible] = useState({ year: start.year, month: start.month });
     const [focused, setFocused] = useState<BsDate | null>(null);
+    const range: DateRange = useMemo(() => ({ min, max }), [min, max]);
+    const years = useMemo(() => supportedYears(range), [range]);
+    // Clamp at render time so a change to min or max also moves the shown month into range.
+    const shown = clampMonth(visible.year, visible.month, range);
     const gridRef = useRef<HTMLTableElement>(null);
 
     // Keep keyboard focus on the focused day after the month changes under it.
@@ -86,11 +98,11 @@ export function NepaliCalendar({
     }, [focused]);
 
     const view = useMemo(
-        () => buildMonthView(visible.year, visible.month, { today, selected, script: activeScript }),
-        [visible.year, visible.month, today, selected, activeScript],
+        () => buildMonthView(shown.year, shown.month, { today, selected, script: activeScript, ...range }),
+        [shown.year, shown.month, today, selected, activeScript, range],
     );
 
-    // The one day reachable with Tab: the focused day, else the selection, today or the 1st.
+    // The one day reachable with Tab: the focused day, else the selection, today or the first enabled day.
     const tabStop = pickTabStop(view.weeks.flat(), focused, selected, today);
 
     const select = (day: BsDate) => {
@@ -110,17 +122,17 @@ export function NepaliCalendar({
 
     const moveMonth = (delta: number) => {
         setFocused(null);
-        setVisible(shiftMonth(visible.year, visible.month, delta));
+        setVisible(shiftMonth(shown.year, shown.month, delta, range));
     };
 
     const jumpTo = (year: number, month: number) => {
         setFocused(null);
-        setVisible({ year, month });
+        setVisible(clampMonth(year, month, range));
     };
 
     const goToToday = () => {
         setFocused(null);
-        setVisible({ year: today.year, month: today.month });
+        setVisible(clampMonth(today.year, today.month, range));
     };
 
     const onDayKeyDown = (event: KeyboardEvent<HTMLButtonElement>, day: BsDate) => {
@@ -129,9 +141,9 @@ export function NepaliCalendar({
             return;
         }
         event.preventDefault();
-        const target = clamp(day, step);
+        const target = clampBs(clamp(day, step), range);
         setFocused(target);
-        if (target.year !== visible.year || target.month !== visible.month) {
+        if (target.year !== shown.year || target.month !== shown.month) {
             setVisible({ year: target.year, month: target.month });
         }
     };
@@ -160,7 +172,7 @@ export function NepaliCalendar({
                             onChange={(event) => jumpTo(view.year, Number(event.target.value))}
                         >
                             {MONTH_NAMES[activeScript].map((name, i) => (
-                                <option key={i} value={i + 1}>
+                                <option key={i} value={i + 1} disabled={!isMonthInRange(view.year, i + 1, range)}>
                                     {name}
                                 </option>
                             ))}
@@ -171,7 +183,7 @@ export function NepaliCalendar({
                             value={view.year}
                             onChange={(event) => jumpTo(Number(event.target.value), view.month)}
                         >
-                            {YEARS.map((year) => (
+                            {years.map((year) => (
                                 <option key={year} value={year}>
                                     {toDigits(year, activeScript)}
                                 </option>
@@ -225,6 +237,7 @@ export function NepaliCalendar({
                                             aria-current={day.isToday ? 'date' : undefined}
                                             aria-pressed={day.isSelected}
                                             data-date={day.key}
+                                            disabled={day.isDisabled}
                                             onClick={() => select(day.bs)}
                                             onKeyDown={(event) => onDayKeyDown(event, day.bs)}
                                         >
@@ -274,11 +287,12 @@ function dayClass(day: MonthViewDay): string {
     if (day.dayOfWeek === 6) name += ' osn-cal__day--saturday';
     if (day.isToday) name += ' osn-cal__day--today';
     if (day.isSelected) name += ' osn-cal__day--selected';
+    if (day.isDisabled) name += ' osn-cal__day--disabled';
     return name;
 }
 
 function pickTabStop(days: (MonthViewDay | null)[], ...candidates: (BsDate | null)[]): BsDate | undefined {
-    const inMonth = days.filter((d): d is MonthViewDay => d !== null);
+    const inMonth = days.filter((d): d is MonthViewDay => d !== null && !d.isDisabled);
     for (const candidate of candidates) {
         const match = inMonth.find((d) => isSameBs(d.bs, candidate));
         if (match) return match.bs;
