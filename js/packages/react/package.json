@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "React month-view calendar and date picker for Nepali (Bikram Sambat) dates, with AD dates alongside.",
   "license": "MIT",
+  "author": "contentxx",
   "type": "module",
   "sideEffects": [
     "*.css"
