@@ -9,7 +9,12 @@ public class NepaliDateConverterTests
     public static TheoryData<int, int, int, string> ReferenceDates => new()
     {
         { 1970, 1, 1, "1913-04-13" },  // Start of the supported range
+        { 1971, 5, 24, "1914-09-08" }, // Birth of B.P. Koirala
+        { 1975, 6, 1, "1918-09-17" },  // Ashwin 1975
+        { 1977, 2, 30, "1920-06-11" }, // Birth of King Mahendra
+        { 1977, 7, 1, "1920-10-17" },  // Kartik 1977
         { 1990, 10, 2, "1934-01-15" }, // Nepal-Bihar earthquake
+        { 1991, 9, 1, "1934-12-16" },  // Poush 1991
         { 2000, 1, 1, "1943-04-14" },  // New year 2000
         { 2007, 11, 7, "1951-02-18" }, // Democracy Day
         { 2063, 1, 11, "2006-04-24" }, // Loktantra Diwas
