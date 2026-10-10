@@ -1,0 +1,43 @@
+{
+  "name": "@osn/nepali-calendar-angular",
+  "version": "0.1.0",
+  "description": "Angular month-view calendar and date picker for Nepali (Bikram Sambat) dates, with AD dates alongside.",
+  "license": "MIT",
+  "author": "contentxx",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unicodist/OSN.NepaliCalendar.git",
+    "directory": "js/packages/angular"
+  },
+  "keywords": [
+    "nepali",
+    "bikram-sambat",
+    "calendar",
+    "date-picker",
+    "angular"
+  ],
+  "scripts": {
+    "build": "ng-packagr -p ng-package.json -c tsconfig.lib.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@osn/nepali-calendar": "0.1.0",
+    "tslib": "^2.8.1"
+  },
+  "peerDependencies": {
+    "@angular/core": "^22.0.0",
+    "@angular/forms": "^22.0.0"
+  },
+  "devDependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/compiler-cli": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
+    "@angular/platform-browser": "^22.2.0",
+    "jsdom": "^27.0.0",
+    "ng-packagr": "^22.2.0",
+    "rxjs": "^7.8.2"
+  }
+}

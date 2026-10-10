@@ -1,0 +1,55 @@
+{
+  "name": "@osn/nepali-calendar-react",
+  "version": "0.1.0",
+  "description": "React month-view calendar and date picker for Nepali (Bikram Sambat) dates, with AD dates alongside.",
+  "license": "MIT",
+  "author": "contentxx",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./styles.css"
+  },
+  "files": [
+    "dist",
+    "styles.css"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unicodist/OSN.NepaliCalendar.git",
+    "directory": "js/packages/react"
+  },
+  "keywords": [
+    "nepali",
+    "bikram-sambat",
+    "calendar",
+    "date-picker",
+    "react"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && cp ../core/styles.css styles.css",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@osn/nepali-calendar": "0.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.1.0",
+    "jsdom": "^27.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}

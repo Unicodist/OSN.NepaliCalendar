@@ -8,6 +8,7 @@ Nepali (Bikram Sambat) calendar utilities for .NET.
 - Format Nepali dates in Roman (`15 Shrawan 2081`) or Nepali (`१५ साउन २०८१`) script.
 - Only dates that exist can be created: invalid dates are rejected, and `IsValid`/`TryCreate` check input without exceptions.
 - Convert between AD (Gregorian) and BS, from BS 1970 to BS 2090 (AD 1913-04-13 to AD 2034-04-13).
+- React and Angular calendar components, on a TypeScript core, in [`js/`](js/README.md).
 - Newari (Nepal Sambat) year support *(future)*.
 
 > **Status:** early scaffolding. The public API is not stable yet.
@@ -114,6 +115,7 @@ src/OSN.NepaliCalendar/          The library (NuGet package)
 tests/OSN.NepaliCalendar.Tests/  xUnit tests
 Directory.Build.props            Shared build settings and package metadata
 Directory.Packages.props         Central package versions
+js/                              npm workspaces: TypeScript core, React and Angular components
 ```
 
 ## License

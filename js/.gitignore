@@ -1,0 +1,9 @@
+# The root .gitignore ignores NuGet's packages/ folders; these are npm workspaces.
+!packages/
+!packages/**
+
+node_modules/
+dist/
+coverage/
+.angular/
+*.tsbuildinfo
