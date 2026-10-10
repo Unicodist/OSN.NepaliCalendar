@@ -26,6 +26,10 @@
     "url": "git+https://github.com/Unicodist/OSN.NepaliCalendar.git",
     "directory": "js/packages/core"
   },
+  "homepage": "https://github.com/Unicodist/OSN.NepaliCalendar/tree/main/js/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/Unicodist/OSN.NepaliCalendar/issues"
+  },
   "keywords": [
     "nepali",
     "bikram-sambat",
