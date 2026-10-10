@@ -1,0 +1,142 @@
+# @opensourcenepal/nepali-calendar
+
+Nepali (Bikram Sambat, BS) dates for JavaScript and TypeScript: convert between AD and BS,
+validate dates, and format them in Roman (`16 Ashwin 2082`) or Nepali (`१६ असोज २०८२`) script.
+
+- No dependencies, works in browsers and Node.js, ships ES modules with TypeScript types.
+- Covers BS 1970-01-01 to BS 2090-12-30 (AD 1913-04-13 to AD 2034-04-13).
+- Uses the same month-length table as the [OSN.NepaliCalendar](https://github.com/Unicodist/OSN.NepaliCalendar) .NET library.
+- Powers [`@opensourcenepal/nepali-calendar-react`](https://www.npmjs.com/package/@opensourcenepal/nepali-calendar-react)
+  and [`@opensourcenepal/nepali-calendar-angular`](https://www.npmjs.com/package/@opensourcenepal/nepali-calendar-angular).
+
+## Installation
+
+```shell
+npm install @opensourcenepal/nepali-calendar
+```
+
+## Getting started
+
+Dates are plain objects. Months run from 1 (Baisakh) to 12 (Chaitra).
+
+```ts
+import { formatBs, toAd, toBs } from '@opensourcenepal/nepali-calendar';
+
+// AD -> BS. A Date is read in local time; its time of day is ignored.
+const dashain = toBs(new Date(2025, 9, 2)); // { year: 2082, month: 6, day: 16 }
+toBs({ year: 2025, month: 4, day: 14 }); // { year: 2082, month: 1, day: 1 }
+
+// BS -> AD
+toAd({ year: 2082, month: 6, day: 16 }); // { year: 2025, month: 10, day: 2 }
+
+// Format
+formatBs(dashain, 'D'); // '16 Ashwin 2082'
+formatBs(dashain, 'F', 'nepali'); // 'बिहीबार, १६ असोज २०८२'
+```
+
+## Converting
+
+| Function       | Does                                                             |
+| -------------- | ---------------------------------------------------------------- |
+| `toBs(date)`   | AD to BS. Takes a `Date` (local time) or `{ year, month, day }`. |
+| `toAd(date)`   | BS to AD as `{ year, month, day }`.                              |
+| `toJsDate(ad)` | An AD `{ year, month, day }` as a local-midnight `Date`.         |
+| `todayBs()`    | Today's BS date in local time.                                   |
+
+```ts
+import { toAd, toJsDate, todayBs } from '@opensourcenepal/nepali-calendar';
+
+toJsDate(toAd({ year: 2082, month: 6, day: 16 })); // Thu Oct 02 2025 00:00 (local)
+todayBs(); // e.g. { year: 2083, month: 6, day: 24 }
+```
+
+Dates outside the supported range, and dates that do not exist, throw a `RangeError`.
+
+## Validating and creating dates
+
+```ts
+import { bsDate, daysInMonth, isValidBsDate, parseBs } from '@opensourcenepal/nepali-calendar';
+
+daysInMonth(2081, 2); // 32: Jestha 2081 has 32 days
+isValidBsDate(2081, 1, 32); // false: Baisakh 2081 has 31 days
+bsDate(2081, 1, 32); // throws RangeError
+parseBs('2082-06-16'); // { year: 2082, month: 6, day: 16 } (also accepts 2082/6/16)
+parseBs('2081-01-32'); // null
+```
+
+## Formatting
+
+`formatBs(date, format = 'd', script = 'roman')` takes the same format strings as
+`NepaliDate.ToString` in the .NET library.
+
+| Format        | `'roman'`                 | `'nepali'`              |
+| ------------- | ------------------------- | ----------------------- |
+| `d` (default) | `2082-06-16`              | `२०८२-०६-१६`            |
+| `D`           | `16 Ashwin 2082`          | `१६ असोज २०८२`          |
+| `F`           | `Bihibar, 16 Ashwin 2082` | `बिहीबार, १६ असोज २०८२` |
+| `M`           | `16 Ashwin`               | `१६ असोज`               |
+| `Y`           | `Ashwin 2082`             | `असोज २०८२`             |
+
+Custom formats use `yyyy`, `yy`, `MMMM` (month name), `MM`, `M`, `dddd` (weekday), `ddd`
+(short weekday), `dd` and `d`. Quote literal text or escape it with `\`:
+
+```ts
+formatBs(date, 'dddd, d MMMM yyyy'); // 'Bihibar, 16 Ashwin 2082'
+formatBs(date, "'Year' yyyy, MMMM", 'nepali'); // 'Year २०८२, असोज'
+```
+
+Names and digits are also available on their own:
+
+```ts
+import { DAY_NAMES, MONTH_NAMES, monthName, toDigits } from '@opensourcenepal/nepali-calendar';
+
+monthName(6, 'nepali'); // 'असोज'
+toDigits(2082, 'nepali'); // '२०८२'
+MONTH_NAMES.roman; // ['Baisakh', 'Jestha', ..., 'Chaitra']
+DAY_NAMES.nepali; // ['आइतबार', ..., 'शनिबार'], Sunday first
+```
+
+## Date arithmetic
+
+```ts
+import { addDays, addMonths, compareBs, dayOfWeek, isSameBs } from '@opensourcenepal/nepali-calendar';
+
+addDays({ year: 2081, month: 12, day: 31 }, 1); // { year: 2082, month: 1, day: 1 }
+addMonths(2081, 12, 1); // { year: 2082, month: 1 }
+dayOfWeek({ year: 2082, month: 6, day: 16 }); // 4 (Thursday; 0 is Sunday)
+compareBs(a, b); // negative, 0 or positive
+isSameBs(a, b); // true when both are the same day
+```
+
+## Building your own calendar UI
+
+`buildMonthView` lays out one BS month as weeks of seven cells, starting on Sunday, with the AD
+date of each day. The React and Angular components are built on it.
+
+```ts
+import { buildMonthView } from '@opensourcenepal/nepali-calendar';
+
+const view = buildMonthView(2082, 6, { selected: { year: 2082, month: 6, day: 16 } });
+view.adLabel; // 'Sep/Oct 2025'
+view.weeks; // 5 rows of 7; null pads the days outside the month
+view.weeks[0][3]; // the 1st: bs 2082-06-01, ad 2025-09-17, dayOfWeek 3, plus isToday, isSelected and key
+```
+
+`supportedYears()`, `shiftMonth()`, `MIN_DATE`, `MAX_DATE`, `MIN_YEAR` and `MAX_YEAR` help with
+pickers and range limits.
+
+## Stylesheet
+
+`@opensourcenepal/nepali-calendar/styles.css` styles the React and Angular calendar components. Both
+component packages also ship a copy, so their users don't need to install this package. See their
+READMEs for how to include and theme it.
+
+## Accuracy
+
+BS month lengths follow the published Nepali calendar (panchang), not a formula, so they are kept
+in a table that is checked against the .NET library. Years after BS 2083 are computed and may
+change once the official calendar for those years is published.
+
+## License
+
+MIT

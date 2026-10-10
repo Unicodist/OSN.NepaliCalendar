@@ -1,6 +1,6 @@
 {
   "name": "@opensourcenepal/nepali-calendar",
-  "version": "0.1.0",
+  "version": "1.0.2",
   "description": "Nepali (Bikram Sambat) calendar for JavaScript: AD/BS conversion, validation, and Roman or Devanagari formatting.",
   "license": "MIT",
   "author": "contentxx",
@@ -25,6 +25,10 @@
     "type": "git",
     "url": "git+https://github.com/Unicodist/OSN.NepaliCalendar.git",
     "directory": "js/packages/core"
+  },
+  "homepage": "https://github.com/Unicodist/OSN.NepaliCalendar/tree/main/js/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/Unicodist/OSN.NepaliCalendar/issues"
   },
   "keywords": [
     "nepali",

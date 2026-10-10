@@ -59,7 +59,7 @@ export class Example {
 }
 ```
 
-Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar/styles.css"]`). The
+Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar-angular/styles.css"]`). The
 component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
 `[(script)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `today`.
@@ -98,4 +98,21 @@ npm run typecheck
 npm run lint       # Prettier
 ```
 
-The packages are not published to npm yet.
+## Publishing to npm
+
+`scripts/publish.mjs` lints, typechecks, tests and builds everything, then publishes the core
+package first and React and Angular after it, since both depend on core. Versions already on
+npm are skipped, so it is safe to re-run after a partial failure.
+
+```shell
+cd js
+npm login                     # once
+npm run release:dry-run       # builds and shows what would be published
+npm run release               # publishes core, React and Angular
+npm run release -- --only core,react --otp 123456 --tag next
+```
+
+Options: `--dry-run`, `--only <core,react,angular>`, `--tag <dist-tag>`, `--otp <code>` for
+two-factor auth, and `--skip-checks` to skip lint, typecheck and tests. Before publishing, bump
+`version` in the package.json files and keep the React and Angular dependency on core at
+`^<core version>`; the script stops if they disagree.

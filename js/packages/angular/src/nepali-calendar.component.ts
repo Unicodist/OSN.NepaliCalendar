@@ -44,7 +44,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
  * A month-view Nepali (BS) calendar that shows AD dates alongside and lets the user pick a day.
  *
  * Bind `[(value)]` or use it as a form control (`ngModel`, `formControl`); the value is a
- * `BsDate` (`{ year, month, day }`). Styles come from `@opensourcenepal/nepali-calendar/styles.css`.
+ * `BsDate` (`{ year, month, day }`). Styles come from `@opensourcenepal/nepali-calendar-angular/styles.css`.
  */
 @Component({
     selector: 'osn-nepali-calendar',
