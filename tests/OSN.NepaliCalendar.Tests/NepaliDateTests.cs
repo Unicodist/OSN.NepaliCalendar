@@ -38,6 +38,64 @@ public class NepaliDateTests
         Assert.Equal(paramName, ex.ParamName);
     }
 
+    [Theory]
+    [InlineData(2081, 1, 31)]
+    [InlineData(2081, 2, 32)]
+    [InlineData(2081, 12, 31)]
+    [InlineData(1970, 1, 1)]
+    [InlineData(2090, 12, 30)]
+    public void IsValid_AcceptsExistingDates(int year, int month, int day)
+    {
+        Assert.True(NepaliDate.IsValid(year, month, day));
+        Assert.True(NepaliDate.TryCreate(year, month, day, out var date));
+        Assert.Equal(new NepaliDate(year, month, day), date);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(1969, 12, 30)]
+    [InlineData(2091, 1, 1)]
+    [InlineData(2081, 0, 1)]
+    [InlineData(2081, 13, 1)]
+    [InlineData(2081, 1, 0)]
+    [InlineData(2081, 1, 32)]
+    [InlineData(2081, 12, 32)]
+    [InlineData(2081, 2, 33)]
+    [InlineData(2081, 1, -1)]
+    public void IsValid_RejectsDatesThatDoNotExist(int year, int month, int day)
+    {
+        Assert.False(NepaliDate.IsValid(year, month, day));
+        Assert.False(NepaliDate.TryCreate(year, month, day, out var date));
+        Assert.Equal(NepaliDate.MinValue, date);
+    }
+
+    [Fact]
+    public void IsValid_AgreesWithMonthLengthsForEverySupportedMonth()
+    {
+        for (var year = NepaliDate.MinValue.Year; year <= NepaliDate.MaxValue.Year; year++)
+        {
+            for (var month = 1; month <= 12; month++)
+            {
+                var length = NepaliDate.DaysInMonth(year, month);
+                Assert.True(NepaliDate.IsValid(year, month, length));
+                Assert.False(NepaliDate.IsValid(year, month, length + 1));
+                Assert.Throws<ArgumentOutOfRangeException>(() => new NepaliDate(year, month, length + 1));
+            }
+        }
+    }
+
+    [Fact]
+    public void Default_IsMinValueRatherThanAnInvalidDate()
+    {
+        NepaliDate date = default;
+
+        Assert.Equal(NepaliDate.MinValue, date);
+        Assert.Equal(1970, date.Year);
+        Assert.Equal(1, date.Month);
+        Assert.Equal(1, date.Day);
+        Assert.Equal(new DateTime(1913, 4, 13), date.ToDateTime());
+    }
+
     [Fact]
     public void Equality_ComparesAllComponents()
     {
