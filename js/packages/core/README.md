@@ -138,6 +138,26 @@ supportedYears(range); // [2082]
 `clampMonth()`, `isMonthInRange()`, `MIN_DATE`, `MAX_DATE`, `MIN_YEAR` and `MAX_YEAR` are there
 too. Without a range, the helpers use the supported range.
 
+### AD month grids
+
+`buildAdMonthView` lays out a Gregorian month the same way, with the BS date of each day and the
+BS months it spans. Days outside the supported BS range are left empty.
+
+```ts
+import { buildAdMonthView, convertMonth } from '@opensourcenepal/nepali-calendar';
+
+const july = buildAdMonthView(2024, 7);
+july.bsLabel; // 'Ashadh/Shrawan 2081'
+july.weeks[0][1]; // 1 July: ad 2024-07-01, bs 2081-03-17, dayOfWeek 1
+
+convertMonth(2081, 4, 'bs', 'ad'); // { year: 2024, month: 7 }, the AD month to show after switching
+```
+
+`shiftAdMonth`, `clampAdMonth`, `isAdMonthInRange` and `supportedAdYears` take the same `{ min, max }`
+BS range. To support both systems with one code path, `buildCalendarView(system, year, month, options)`,
+`clampCalendarMonth`, `isCalendarMonthInRange`, `calendarYears`, `calendarMonthNames` and `dayLabel`
+take a `'bs' | 'ad'` system; the components use these.
+
 ## Stylesheet
 
 `@opensourcenepal/nepali-calendar/styles.css` styles the React and Angular calendar components. Both

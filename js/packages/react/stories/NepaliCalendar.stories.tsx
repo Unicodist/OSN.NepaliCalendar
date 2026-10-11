@@ -9,10 +9,13 @@ const meta = {
     args: {
         onChange: fn(),
         onScriptChange: fn(),
+        onCalendarChange: fn(),
     },
     argTypes: {
         script: { control: 'inline-radio', options: ['nepali', 'roman'] },
         defaultScript: { control: 'inline-radio', options: ['nepali', 'roman'] },
+        calendar: { control: 'inline-radio', options: ['bs', 'ad'] },
+        defaultCalendar: { control: 'inline-radio', options: ['bs', 'ad'] },
     },
 } satisfies Meta<typeof NepaliCalendar>;
 
@@ -25,6 +28,11 @@ export const Default: Story = {};
 /** Roman (transliterated) month and day names with Latin digits. */
 export const Roman: Story = {
     args: { defaultScript: 'roman' },
+};
+
+/** A Gregorian (AD) month with the BS date under each day. The BS/AD button switches back. */
+export const AdCalendar: Story = {
+    args: { defaultCalendar: 'ad', defaultScript: 'roman' },
 };
 
 /** Opens on the month of an initially selected date. */
@@ -56,7 +64,7 @@ export const MinAndMax: Story = {
 
 /** BS dates only: no AD dates, script toggle or today button. */
 export const Minimal: Story = {
-    args: { showAdDates: false, showScriptToggle: false, showTodayButton: false },
+    args: { showAdDates: false, showScriptToggle: false, showCalendarToggle: false, showTodayButton: false },
 };
 
 /** A controlled date and script, mirrored below the calendar. */

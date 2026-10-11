@@ -51,6 +51,25 @@ export const AD_MONTH_NAMES: Readonly<Record<Script, readonly string[]>> = {
     ],
 };
 
+/** Full Gregorian month names, January first, for an AD calendar header. */
+export const FULL_AD_MONTH_NAMES: Readonly<Record<Script, readonly string[]>> = {
+    roman: [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+    ],
+    nepali: AD_MONTH_NAMES.nepali,
+};
+
 const NEPALI_ZERO = 0x0966;
 
 /** Returns the name of a BS month (1-12). */
