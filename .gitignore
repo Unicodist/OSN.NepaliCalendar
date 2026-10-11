@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 artifacts/
+
+# Written into each npm package at publish time by js/scripts/package-notes.mjs
+js/packages/*/CHANGELOG.md

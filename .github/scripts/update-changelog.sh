@@ -20,9 +20,14 @@ entry="$(mktemp)"
   echo
   echo "## $title ($date)"
   echo
-  # GitHub's notes open with a "## What's Changed" heading; the release title replaces it, and the
-  # other headings move one level down so they sit under the release title.
-  grep -v "^## What's Changed" "$notes" | sed -e '/./,$!d' -e 's/^#/##/'
+  if grep -q "^## What's Changed" "$notes"; then
+    # GitHub's generated notes: the release title replaces "## What's Changed", the sections
+    # under it are already ### headings, and "## New Contributors" becomes one of them.
+    grep -v "^## What's Changed" "$notes" | sed -e '/./,$!d' -e 's/^## /### /'
+  else
+    # Notes written by hand: every heading moves one level down to sit under the release title.
+    sed -e '/./,$!d' -e 's/^#/##/' "$notes"
+  fi
 } > "$entry"
 
 awk -v marker="$marker" -v entry="$entry" '

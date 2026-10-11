@@ -48,6 +48,10 @@ nuget.org.
      Actions), the workflow pushes the package to nuget.org itself. Otherwise download the `.nupkg`
      from the GitHub release and upload it on nuget.org. Upload that file rather than one you
      packed locally, because it carries the release notes.
-   - **npm**: from `js/`, run `npm run release` as before (`npm login` first).
+   - **npm**: once the workflow has finished, pull `main` (so CHANGELOG.md has the new entry), then
+     run `npm run release` from `js/` (`npm login` first). npm has no release-notes field and shows
+     only a package's README, so the script adds a "What's new in <version>" section to the top of
+     each README, from that CHANGELOG.md entry, and ships a CHANGELOG.md in each package. It puts
+     the READMEs back afterwards, so nothing changes in your checkout.
 
 A version with a suffix, such as `nuget-v1.1.0-beta.1`, is published as a pre-release.

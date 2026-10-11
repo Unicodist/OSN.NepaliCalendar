@@ -19,7 +19,8 @@
   },
   "files": [
     "dist",
-    "styles.css"
+    "styles.css",
+    "CHANGELOG.md"
   ],
   "repository": {
     "type": "git",

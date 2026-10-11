@@ -5,5 +5,5 @@
     "entryFile": "src/public-api.ts"
   },
   "allowedNonPeerDependencies": ["@opensourcenepal/nepali-calendar"],
-  "assets": ["styles.css"]
+  "assets": ["styles.css", "CHANGELOG.md"]
 }
