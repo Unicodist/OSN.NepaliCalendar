@@ -108,6 +108,9 @@ dotnet test
 dotnet pack src/OSN.NepaliCalendar -c Release -o artifacts
 ```
 
+Release steps are in [RELEASING.md](RELEASING.md), and the history of each release is in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Repository layout
 
 ```

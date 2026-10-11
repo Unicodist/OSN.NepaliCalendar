@@ -1,0 +1,166 @@
+name: Release
+
+# Runs when a version tag is pushed:
+#   nuget-v1.2.3  releases the NuGet package OSN.NepaliCalendar 1.2.3
+#   npm-v1.2.3    releases the npm packages at 1.2.3
+# It writes the release notes, creates the GitHub release with the packages attached, and adds the
+# notes to CHANGELOG.md. See RELEASING.md.
+
+on:
+  push:
+    tags:
+      - "nuget-v*"
+      - "npm-v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  GH_TOKEN: ${{ github.token }}
+  TAG: ${{ github.ref_name }}
+
+jobs:
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read the tag
+        id: tag
+        run: |
+          case "$TAG" in
+            nuget-v*) kind=nuget; title="NuGet ${TAG#nuget-v}" ;;
+            npm-v*)   kind=npm;   title="npm ${TAG#npm-v}" ;;
+          esac
+          version="${TAG#*-v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::$TAG does not end in a version like 1.2.3."
+            exit 1
+          fi
+          {
+            echo "kind=$kind"
+            echo "version=$version"
+            echo "title=$title"
+            [[ "$version" == *-* ]] && echo "prerelease=true" || echo "prerelease=false"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write the release notes
+        run: .github/scripts/release-notes.sh "$TAG"
+
+      # NuGet package
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.tag.outputs.kind == 'nuget'
+        with:
+          global-json-file: global.json
+
+      - name: Check the NuGet version matches the tag
+        if: steps.tag.outputs.kind == 'nuget'
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          project="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' src/OSN.NepaliCalendar/OSN.NepaliCalendar.csproj)"
+          if [[ "${VERSION%%-*}" != "$project" ]]; then
+            echo "::error::The tag is $TAG but VersionPrefix in OSN.NepaliCalendar.csproj is $project. Update the project version first."
+            exit 1
+          fi
+
+      - name: Build, test and pack the NuGet package
+        if: steps.tag.outputs.kind == 'nuget'
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          # The project reads PackageReleaseNotes from the environment, so the notes land in the
+          # package's .nuspec and show on its nuget.org page.
+          export PackageReleaseNotes="$(cat release-notes.md)"
+          dotnet test --configuration Release
+          dotnet pack src/OSN.NepaliCalendar --configuration Release -p:Version="$VERSION" --output ./artifacts
+
+      - name: Push to nuget.org
+        if: steps.tag.outputs.kind == 'nuget'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [[ -z "$NUGET_API_KEY" ]]; then
+            echo "No NUGET_API_KEY secret, so the package is only attached to the GitHub release. Upload it to nuget.org from there."
+            exit 0
+          fi
+          dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      # npm packages
+
+      - uses: actions/setup-node@v4
+        if: steps.tag.outputs.kind == 'npm'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Check the npm versions match the tag
+        if: steps.tag.outputs.kind == 'npm'
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          status=0
+          for manifest in js/packages/core/package.json js/packages/react/package.json js/packages/angular/package.json; do
+            found="$(jq -r .version "$manifest")"
+            if [[ "$found" != "$VERSION" ]]; then
+              echo "::error::The tag is $TAG but $manifest has version $found."
+              status=1
+            fi
+          done
+          exit $status
+
+      - name: Build, test and pack the npm packages
+        if: steps.tag.outputs.kind == 'npm'
+        working-directory: js
+        run: |
+          npm ci
+          npm test
+          npm run build
+          mkdir -p ../artifacts
+          npm pack --workspace packages/core --workspace packages/react --pack-destination ../artifacts
+          npm pack ./packages/angular/dist --pack-destination ../artifacts
+
+      # Release
+
+      - name: Create the GitHub release
+        env:
+          TITLE: ${{ steps.tag.outputs.title }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
+        run: |
+          flags=()
+          [[ "$PRERELEASE" == true ]] && flags+=(--prerelease)
+          # Only nuget-v* tags are marked latest, so the repository's "Latest release" badge
+          # always points at the NuGet package.
+          [[ "$TAG" == nuget-v* && "$PRERELEASE" != true ]] && flags+=(--latest) || flags+=(--latest=false)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # The release was drafted on GitHub before the tag was pushed: fill it in.
+            gh release edit "$TAG" --title "$TITLE" --notes-file release-notes.md --draft=false "${flags[@]}"
+            gh release upload "$TAG" artifacts/* --clobber
+          else
+            gh release create "$TAG" artifacts/* --title "$TITLE" --notes-file release-notes.md --verify-tag "${flags[@]}"
+          fi
+
+      - name: Add the notes to CHANGELOG.md
+        env:
+          TITLE: ${{ steps.tag.outputs.title }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch origin "$DEFAULT_BRANCH"
+          git checkout -B changelog "origin/$DEFAULT_BRANCH"
+          .github/scripts/update-changelog.sh "$TITLE" release-notes.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Add $TITLE to the changelog [skip ci]"
+          git push origin "HEAD:$DEFAULT_BRANCH"
