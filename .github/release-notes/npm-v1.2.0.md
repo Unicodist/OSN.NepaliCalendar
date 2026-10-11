@@ -44,6 +44,6 @@ Both packages also export the `CalendarSystem` type (`'bs' | 'ad'`).
 
 No changes are needed. The BS/AD button appears in the toolbar by default; set
 `showCalendarToggle` to `false` to keep the previous toolbar. React and Angular now depend on
-`@opensourcenepal/nepali-calendar` `^1.1.1`, which npm installs for you.
+`@opensourcenepal/nepali-calendar` `^1.2.0`, which npm installs for you.
 
-**Full changelog**: https://github.com/Unicodist/OSN.NepaliCalendar/compare/ab9d58d...npm-v1.1.1
+**Full changelog**: https://github.com/Unicodist/OSN.NepaliCalendar/compare/ab9d58d...npm-v1.2.0

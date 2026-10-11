@@ -10,7 +10,7 @@ file by hand. See [RELEASING.md](RELEASING.md) for how to cut a release.
 
 <!-- New releases are added below this line by .github/workflows/release.yml. -->
 
-## npm 1.1.1 (2026-10-11)
+## npm 1.2.0 (2026-10-11)
 
 ### New features
 
@@ -25,7 +25,7 @@ file by hand. See [RELEASING.md](RELEASING.md) for how to cut a release.
   `clampCalendarMonth`, `isCalendarMonthInRange`, `calendarYears`, `calendarMonthNames` and
   `dayLabel`, which work with either calendar. `styles.css` styles the new button.
 
-React and Angular now depend on core `^1.1.1`.
+React and Angular now depend on core `^1.2.0`.
 
 ## npm 1.1.0 (2026-10-10)
 
