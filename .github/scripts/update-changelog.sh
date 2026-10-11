@@ -9,6 +9,12 @@ notes="$2"
 marker='<!-- New releases are added below this line'
 date="$(date -u +%Y-%m-%d)"
 
+# A release whose entry was written by hand in its version bump is already listed.
+if grep -q "^## $title (" CHANGELOG.md; then
+  echo "CHANGELOG.md already has $title."
+  exit 0
+fi
+
 entry="$(mktemp)"
 {
   echo

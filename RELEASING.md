@@ -26,6 +26,11 @@ nuget.org.
 2. Bump the version in a pull request and merge it (the workflow stops if the tag and the version in
    the files differ). For npm, React and Angular must depend on the new core version too, as
    `npm run release` checks.
+
+   To write the notes yourself instead, add them to the same pull request as
+   `.github/release-notes/<tag>.md` (for example `npm-v1.1.1.md`). The workflow uses that file as
+   the release notes. If you also add the entry to CHANGELOG.md, as `## npm 1.1.1 (date)`, the
+   workflow leaves the changelog alone.
 3. Tag the merge on `main` and push the tag:
 
    ```sh
