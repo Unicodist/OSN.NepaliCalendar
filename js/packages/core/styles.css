@@ -81,6 +81,7 @@
 }
 
 .osn-cal__nav,
+.osn-cal__system,
 .osn-cal__script {
     border: 1px solid var(--osn-cal-border);
     border-radius: calc(var(--osn-cal-radius) - 2px);
@@ -93,6 +94,7 @@
 }
 
 .osn-cal__nav:hover:not(:disabled),
+.osn-cal__system:hover,
 .osn-cal__script:hover {
     background: var(--osn-cal-hover);
 }
@@ -108,6 +110,12 @@
     align-items: center;
     margin-top: 0.5rem;
     gap: 0.5rem;
+}
+
+.osn-cal__toggles {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
 }
 
 .osn-cal__today {

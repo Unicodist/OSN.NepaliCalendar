@@ -2,7 +2,7 @@ import { Component, provideZonelessChangeDetection, signal } from '@angular/core
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { type BsDate, NepaliCalendarComponent, type Script } from '../src/public-api';
+import { type BsDate, type CalendarSystem, NepaliCalendarComponent, type Script } from '../src/public-api';
 
 const today: BsDate = { year: 2081, month: 4, day: 15 };
 
@@ -13,6 +13,8 @@ const today: BsDate = { year: 2081, month: 4, day: 15 };
             [today]="today"
             [(value)]="value"
             [(script)]="script"
+            [(calendar)]="calendar"
+            [showCalendarToggle]="showCalendarToggle"
             [initialMonth]="initialMonth"
             [showAdDates]="showAdDates"
             [showScriptToggle]="showScriptToggle"
@@ -27,6 +29,8 @@ class HostComponent {
     today = today;
     value: BsDate | null = null;
     script: Script = 'nepali';
+    calendar: CalendarSystem = 'bs';
+    showCalendarToggle = true;
     initialMonth: { year: number; month: number } | null = null;
     showAdDates = true;
     showScriptToggle = true;
@@ -216,10 +220,11 @@ describe('NepaliCalendarComponent', () => {
         expect(button('Previous month').disabled).toBe(true);
     });
 
-    it('can hide AD dates, the toggle and the today button', async () => {
+    it('can hide AD dates, the toggles and the today button', async () => {
         const { root } = await setup((h) => {
             h.showAdDates = false;
             h.showScriptToggle = false;
+            h.showCalendarToggle = false;
             h.showTodayButton = false;
         });
 
@@ -313,6 +318,68 @@ describe('NepaliCalendarComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
             expect(control.errors).toBeNull();
+        });
+    });
+
+    describe('BS and AD', () => {
+        it('switches to an AD month with BS dates alongside, and back', async () => {
+            const { host, root, click, title } = await setup((h) => (h.script = 'roman'));
+
+            await click('Show AD calendar');
+            expect(host.calendar).toBe('ad');
+            expect(title()).toBe('July 2024');
+            expect(root.querySelector('.osn-cal__title-ad')?.textContent).toBe('Ashadh/Shrawan 2081');
+            const day = root.querySelector<HTMLButtonElement>('[aria-label="Mangalbar, 30 July 2024"]')!;
+            expect(day.querySelector('.osn-cal__day-bs')?.textContent).toBe('30');
+            expect(day.querySelector('.osn-cal__day-ad')?.textContent).toBe('15');
+            expect(day.getAttribute('aria-current')).toBe('date');
+            expect(root.querySelectorAll('.osn-cal__day')).toHaveLength(31);
+
+            await click('Next month');
+            expect(title()).toBe('August 2024');
+
+            await click('Show BS calendar');
+            expect(host.calendar).toBe('bs');
+            expect(title()).toBe('Shrawan 2081');
+        });
+
+        it('picks days in AD and follows a bound calendar', async () => {
+            const { host, root, title, stable } = await setup((h) =>
+                Object.assign(h, { script: 'roman', calendar: 'ad', value: { year: 2081, month: 5, day: 1 } }),
+            );
+            expect(title()).toBe('August 2024');
+
+            root.querySelector<HTMLButtonElement>('[aria-label$=", 20 August 2024"]')!.click();
+            await stable();
+            expect(host.value).toEqual({ year: 2081, month: 5, day: 4 });
+            expect(host.picked).toEqual({
+                bs: { year: 2081, month: 5, day: 4 },
+                ad: { year: 2024, month: 8, day: 20 },
+            });
+        });
+
+        it('limits the AD pickers to min and max', async () => {
+            const { root } = await setup((h) =>
+                Object.assign(h, {
+                    script: 'roman',
+                    calendar: 'ad',
+                    min: { year: 2081, month: 4, day: 10 },
+                    max: { year: 2081, month: 9, day: 1 },
+                }),
+            );
+            const years = root.querySelector<HTMLSelectElement>('.osn-cal__select--year')!;
+            expect([...years.options].map((o) => o.value)).toEqual(['2024']);
+            const months = root.querySelector<HTMLSelectElement>('.osn-cal__select--month')!;
+            expect([...months.options].filter((o) => !o.disabled).map((o) => o.text.trim())).toEqual([
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December',
+            ]);
+            expect(root.querySelector<HTMLButtonElement>('[aria-label$=", 24 July 2024"]')!.disabled).toBe(true);
+            expect(root.querySelector<HTMLButtonElement>('[aria-label$=", 25 July 2024"]')!.disabled).toBe(false);
         });
     });
 });

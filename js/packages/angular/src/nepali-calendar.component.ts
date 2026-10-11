@@ -27,24 +27,25 @@ import {
     ABBREVIATED_DAY_NAMES,
     type AdDate,
     type BsDate,
+    type CalendarSystem,
     DAY_NAMES,
     type DateRange,
-    MONTH_NAMES,
     MAX_DATE,
     MIN_DATE,
     type MonthViewDay,
     type Script,
     addDays,
-    buildMonthView,
+    buildCalendarView,
+    calendarMonthNames,
+    calendarYears,
     clampBs,
-    clampMonth,
+    clampCalendarMonth,
     compareBs,
-    formatBs,
-    isMonthInRange,
+    convertMonth,
+    dayLabel,
+    isCalendarMonthInRange,
     isSameBs,
-    monthName,
-    shiftMonth,
-    supportedYears,
+    monthOf,
     toAd,
     toDigits,
     todayBs,
@@ -54,6 +55,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
 
 /**
  * A month-view Nepali (BS) calendar that shows AD dates alongside and lets the user pick a day.
+ * It can also be switched to an AD (Gregorian) month grid with BS dates alongside.
  *
  * Bind `[(value)]` or use it as a form control (`ngModel`, `formControl`); the value is a
  * `BsDate` (`{ year, month, day }`). With `min` or `max` set, a form control also gets the
@@ -112,7 +114,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                     </select>
                 </span>
                 @if (showAdDates) {
-                    <span class="osn-cal__title-ad" aria-live="polite">{{ view().adLabel }}</span>
+                    <span class="osn-cal__title-ad" aria-live="polite">{{ view().otherLabel }}</span>
                 }
             </div>
             <button
@@ -162,9 +164,9 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                                         (click)="select(day.bs)"
                                         (keydown)="onDayKeyDown($event, day.bs)"
                                     >
-                                        <span class="osn-cal__day-bs">{{ digits(day.bs.day) }}</span>
+                                        <span class="osn-cal__day-bs">{{ digits(primaryDay(day)) }}</span>
                                         @if (showAdDates) {
-                                            <span class="osn-cal__day-ad">{{ digits(day.ad.day) }}</span>
+                                            <span class="osn-cal__day-ad">{{ digits(secondaryDay(day)) }}</span>
                                         }
                                     </button>
                                 </td>
@@ -176,7 +178,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                 }
             </tbody>
         </table>
-        @if (showTodayButton || showScriptToggle) {
+        @if (showTodayButton || showScriptToggle || showCalendarToggle) {
             <div class="osn-cal__toolbar">
                 @if (showTodayButton) {
                     <button type="button" class="osn-cal__today" [disabled]="disabled()" (click)="goToToday()">
@@ -185,16 +187,28 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                 } @else {
                     <span></span>
                 }
-                @if (showScriptToggle) {
-                    <button
-                        type="button"
-                        class="osn-cal__script"
-                        [attr.aria-label]="nepali() ? 'Show in Roman script' : 'नेपालीमा देखाउनुहोस्'"
-                        (click)="toggleScript()"
-                    >
-                        {{ nepali() ? 'ABC' : 'नेपाली' }}
-                    </button>
-                }
+                <span class="osn-cal__toggles">
+                    @if (showCalendarToggle) {
+                        <button
+                            type="button"
+                            class="osn-cal__system"
+                            [attr.aria-label]="calendarToggleLabel()"
+                            (click)="toggleCalendar()"
+                        >
+                            {{ calendarToggleText() }}
+                        </button>
+                    }
+                    @if (showScriptToggle) {
+                        <button
+                            type="button"
+                            class="osn-cal__script"
+                            [attr.aria-label]="nepali() ? 'Show in Roman script' : 'नेपालीमा देखाउनुहोस्'"
+                            (click)="toggleScript()"
+                        >
+                            {{ nepali() ? 'ABC' : 'नेपाली' }}
+                        </button>
+                    }
+                </span>
             </div>
         }
     `,
@@ -231,13 +245,30 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     /** Shows the Nepali/Roman toggle. Defaults to `true`. */
     @Input({ transform: booleanAttribute }) showScriptToggle = true;
 
-    /** Shows the AD day under each BS day. Defaults to `true`. */
+    /** The calendar the grid follows: `bs` (default) or `ad`. Supports `[(calendar)]`. */
+    @Input() set calendar(value: CalendarSystem | null | undefined) {
+        this.system.set(value ?? 'bs');
+    }
+    get calendar(): CalendarSystem {
+        return this.system();
+    }
+
+    /** Emits when the user switches between BS and AD with the toggle. */
+    @Output() readonly calendarChange = new EventEmitter<CalendarSystem>();
+
+    /** Shows the BS/AD toggle. Defaults to `true`. */
+    @Input({ transform: booleanAttribute }) showCalendarToggle = true;
+
+    /**
+     * Shows the other calendar's date under each day (AD under BS days, or BS under AD days) and
+     * its months in the header. Defaults to `true`.
+     */
     @Input({ transform: booleanAttribute }) showAdDates = true;
 
     /** Shows the button that jumps to today. Defaults to `true`. */
     @Input({ transform: booleanAttribute }) showTodayButton = true;
 
-    /** The month shown first. Defaults to the month of the selection, or of today. */
+    /** The BS month shown first. Defaults to the month of the selection, or of today. */
     @Input() initialMonth: { year: number; month: number } | null = null;
 
     /** The earliest BS date the user can pick. Earlier days are disabled and navigation stops at its month. */
@@ -267,20 +298,25 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     protected readonly activeScript = signal<Script>('nepali');
     protected readonly todayDate = signal<BsDate>(safeToday());
     protected readonly disabled = signal(false);
-    protected readonly visible = signal<{ year: number; month: number } | null>(null);
+    protected readonly system = signal<CalendarSystem>('bs');
+    protected readonly visible = signal<{ system: CalendarSystem; year: number; month: number } | null>(null);
     protected readonly focused = signal<BsDate | null>(null);
     protected readonly range = signal<DateRange>({ min: null, max: null });
 
     protected readonly nepali = computed(() => this.activeScript() === 'nepali');
     protected readonly weekdays = computed(() => ABBREVIATED_DAY_NAMES[this.activeScript()]);
     protected readonly weekdayNames = computed(() => DAY_NAMES[this.activeScript()]);
-    protected readonly monthNames = computed(() => MONTH_NAMES[this.activeScript()]);
-    protected readonly years = computed(() => supportedYears(this.range()));
+    protected readonly monthNames = computed(() => calendarMonthNames(this.system(), this.activeScript()));
+    protected readonly years = computed(() => calendarYears(this.system(), this.range()));
 
     protected readonly view = computed(() => {
-        const visible = this.visible() ?? this.selected() ?? this.todayDate();
-        const shown = clampMonth(visible.year, visible.month, this.range());
-        return buildMonthView(shown.year, shown.month, {
+        // Convert and clamp here, so switching calendars or changing min or max keeps the shown
+        // month in view and in range.
+        const system = this.system();
+        const visible = this.visible() ?? { system: 'bs', ...(this.selected() ?? this.todayDate()) };
+        const converted = convertMonth(visible.year, visible.month, visible.system, system, this.selected());
+        const shown = clampCalendarMonth(system, converted.year, converted.month, this.range());
+        return buildCalendarView(system, shown.year, shown.month, {
             today: this.todayDate(),
             selected: this.selected(),
             script: this.activeScript(),
@@ -289,8 +325,18 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     });
 
     protected readonly title = computed(
-        () => `${monthName(this.view().month, this.activeScript())} ${toDigits(this.view().year, this.activeScript())}`,
+        () => `${this.monthNames()[this.view().month - 1]} ${toDigits(this.view().year, this.activeScript())}`,
     );
+
+    protected readonly calendarToggleText = computed(() => {
+        if (this.system() === 'bs') return this.nepali() ? 'ई.सं.' : 'AD';
+        return this.nepali() ? 'वि.सं.' : 'BS';
+    });
+
+    protected readonly calendarToggleLabel = computed(() => {
+        if (this.system() === 'bs') return this.nepali() ? 'ईस्वी संवत्‌मा देखाउनुहोस्' : 'Show AD calendar';
+        return this.nepali() ? 'विक्रम संवत्‌मा देखाउनुहोस्' : 'Show BS calendar';
+    });
 
     /** The one day reachable with Tab: the focused day, else the selection, today or the first enabled day. */
     private readonly tabStop = computed(() => {
@@ -310,7 +356,7 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['initialMonth'] && this.initialMonth) {
-            this.visible.set({ year: this.initialMonth.year, month: this.initialMonth.month });
+            this.visible.set({ system: 'bs', year: this.initialMonth.year, month: this.initialMonth.month });
         }
     }
 
@@ -319,11 +365,19 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     }
 
     protected monthInRange(month: number): boolean {
-        return isMonthInRange(this.view().year, month, this.range());
+        return isCalendarMonthInRange(this.system(), this.view().year, month, this.range());
     }
 
     protected label(day: MonthViewDay): string {
-        return formatBs(day.bs, 'F', this.activeScript());
+        return dayLabel(day, this.system(), this.activeScript());
+    }
+
+    protected primaryDay(day: MonthViewDay): number {
+        return this.system() === 'ad' ? day.ad.day : day.bs.day;
+    }
+
+    protected secondaryDay(day: MonthViewDay): number {
+        return this.system() === 'ad' ? day.bs.day : day.ad.day;
     }
 
     protected digits(value: number): string {
@@ -344,21 +398,35 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
         this.scriptChange.emit(next);
     }
 
+    protected toggleCalendar(): void {
+        const view = this.view();
+        const next: CalendarSystem = view.system === 'bs' ? 'ad' : 'bs';
+        this.focused.set(null);
+        this.visible.set({ system: view.system, year: view.year, month: view.month });
+        this.system.set(next);
+        this.calendarChange.emit(next);
+    }
+
+    private show(year: number, month: number): void {
+        const system = this.system();
+        this.visible.set({ system, ...clampCalendarMonth(system, year, month, this.range()) });
+    }
+
     protected moveMonth(delta: number): void {
         const view = this.view();
         this.focused.set(null);
-        this.visible.set(shiftMonth(view.year, view.month, delta, this.range()));
+        this.show(view.year, view.month + delta);
     }
 
     protected jumpTo(year: number, month: number): void {
         this.focused.set(null);
-        this.visible.set(clampMonth(year, month, this.range()));
+        this.show(year, month);
     }
 
     protected goToToday(): void {
-        const today = this.todayDate();
+        const month = monthOf(this.todayDate(), this.system());
         this.focused.set(null);
-        this.visible.set(clampMonth(today.year, today.month, this.range()));
+        this.show(month.year, month.month);
     }
 
     protected onDayKeyDown(event: KeyboardEvent, day: BsDate): void {
@@ -375,14 +443,14 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
         }
         target = clampBs(target, this.range());
         this.focused.set(target);
-        this.visible.set({ year: target.year, month: target.month });
+        this.visible.set({ system: this.system(), ...monthOf(target, this.system()) });
         this.changeDetector.detectChanges();
         this.host.nativeElement.querySelector<HTMLButtonElement>('.osn-cal__day[tabindex="0"]')?.focus();
     }
 
     writeValue(value: BsDate | null): void {
         this.selected.set(value ?? null);
-        this.visible.set(value ? { year: value.year, month: value.month } : this.visible());
+        this.visible.set(value ? { system: 'bs', year: value.year, month: value.month } : this.visible());
     }
 
     registerOnChange(fn: (value: BsDate | null) => void): void {

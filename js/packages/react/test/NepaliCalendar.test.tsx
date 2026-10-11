@@ -137,8 +137,16 @@ describe('NepaliCalendar', () => {
         expect((screen.getByRole('button', { name: 'Previous month' }) as HTMLButtonElement).disabled).toBe(true);
     });
 
-    it('can hide AD dates, the toggle and the today button', () => {
-        render(<NepaliCalendar today={today} showAdDates={false} showScriptToggle={false} showTodayButton={false} />);
+    it('can hide AD dates, the toggles and the today button', () => {
+        render(
+            <NepaliCalendar
+                today={today}
+                showAdDates={false}
+                showScriptToggle={false}
+                showCalendarToggle={false}
+                showTodayButton={false}
+            />,
+        );
 
         expect(document.querySelector('.osn-cal__day-ad')).toBeNull();
         expect(document.querySelector('.osn-cal__title-ad')).toBeNull();
@@ -195,6 +203,88 @@ describe('NepaliCalendar', () => {
 
             await userEvent.click(screen.getByRole('button', { name: 'Today' }));
             expect(title()).toBe('Shrawan 2081');
+        });
+    });
+
+    describe('BS and AD', () => {
+        it('switches to an AD month with BS dates alongside, and back', async () => {
+            const onCalendarChange = vi.fn();
+            render(<NepaliCalendar today={today} defaultScript="roman" onCalendarChange={onCalendarChange} />);
+
+            await userEvent.click(screen.getByRole('button', { name: 'Show AD calendar' }));
+            expect(onCalendarChange).toHaveBeenCalledWith('ad');
+            // Shrawan 2081 is mostly in July 2024, but the middle of the month (15 Shrawan) is 30 July.
+            expect(title()).toBe('July 2024');
+            expect(screen.getByText('Ashadh/Shrawan 2081')).toBeTruthy();
+            const day = screen.getByRole('button', { name: 'Mangalbar, 30 July 2024' });
+            expect(day.querySelector('.osn-cal__day-bs')?.textContent).toBe('30');
+            expect(day.querySelector('.osn-cal__day-ad')?.textContent).toBe('15');
+            expect(day.getAttribute('aria-current')).toBe('date');
+            expect(document.querySelectorAll('.osn-cal__day')).toHaveLength(31);
+
+            await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+            expect(title()).toBe('August 2024');
+
+            await userEvent.click(screen.getByRole('button', { name: 'Show BS calendar' }));
+            expect(title()).toBe('Shrawan 2081');
+        });
+
+        it('picks days and keeps the selection in view when switching', async () => {
+            const onChange = vi.fn();
+            render(
+                <NepaliCalendar
+                    today={today}
+                    defaultScript="roman"
+                    defaultCalendar="ad"
+                    defaultValue={{ year: 2081, month: 5, day: 1 }}
+                    onChange={onChange}
+                />,
+            );
+            // BS 2081-05-01 is 17 August 2024.
+            expect(title()).toBe('August 2024');
+
+            await userEvent.click(screen.getByRole('button', { name: /, 20 August 2024$/ }));
+            expect(onChange).toHaveBeenCalledWith({ year: 2081, month: 5, day: 4 }, { year: 2024, month: 8, day: 20 });
+
+            await userEvent.click(screen.getByRole('button', { name: 'Show BS calendar' }));
+            expect(title()).toBe('Bhadra 2081');
+        });
+
+        it('limits the AD pickers and keyboard to min and max', async () => {
+            render(
+                <NepaliCalendar
+                    today={today}
+                    defaultScript="roman"
+                    calendar="ad"
+                    min={{ year: 2081, month: 4, day: 10 }}
+                    max={{ year: 2081, month: 9, day: 1 }}
+                />,
+            );
+            const years = screen.getByRole('combobox', { name: 'Year' }) as HTMLSelectElement;
+            expect([...years.options].map((o) => o.value)).toEqual(['2024']);
+            const months = screen.getByRole('combobox', { name: 'Month' }) as HTMLSelectElement;
+            expect([...months.options].filter((o) => !o.disabled).map((o) => o.text)).toEqual([
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December',
+            ]);
+            // BS 2081-04-10 is 25 July 2024.
+            const first = screen.getByRole('button', { name: /, 25 July 2024$/ });
+            expect((screen.getByRole('button', { name: /, 24 July 2024$/ }) as HTMLButtonElement).disabled).toBe(true);
+            first.focus();
+            await userEvent.keyboard('{ArrowLeft}');
+            expect(document.activeElement?.getAttribute('data-date')).toBe('2081-04-10');
+            await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+            expect(document.activeElement?.getAttribute('aria-label')).toBe('Bihibar, 8 August 2024');
+            expect(title()).toBe('August 2024');
+        });
+
+        it('labels the toggle in Nepali', () => {
+            render(<NepaliCalendar today={today} />);
+            expect(screen.getByRole('button', { name: 'ईस्वी संवत्‌मा देखाउनुहोस्' }).textContent).toBe('ई.सं.');
         });
     });
 });

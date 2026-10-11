@@ -2,7 +2,9 @@
 
 A Nepali (Bikram Sambat) calendar and date picker for Angular. It shows a BS month with the AD
 date under each day, and switches between Nepali (`असोज २०८२`) and Roman (`Ashwin 2082`) script.
+A button switches the grid to AD months, with the BS date under each day.
 
+- BS or AD month grids, switchable by the user or with `[(calendar)]`
 - Standalone component with `[(value)]` two-way binding, `ngModel` and reactive forms
 - Month and year dropdowns covering BS 1970 to 2090, plus previous and next buttons
 - Today highlighted, a "Today" button, and arrow-key navigation between days
@@ -134,6 +136,19 @@ Import `FormsModule`, then:
 <osn-nepali-calendar script="roman" [initialMonth]="{ year: 2082, month: 1 }" />
 ```
 
+### Switch between BS and AD
+
+The toolbar has a button that switches the grid between BS months and AD (Gregorian) months.
+In AD, each day shows its AD date with the BS date under it, and the header shows the BS months
+it spans. The value is still a `BsDate`, and `dateSelect` still emits both dates.
+
+```html
+<osn-nepali-calendar calendar="ad" />
+```
+
+Bind `[(calendar)]` to keep it in sync with your app, or hide the button with
+`[showCalendarToggle]="false"` to always show one calendar.
+
 ### Keep the script in sync with your app
 
 ```html
@@ -143,25 +158,33 @@ Import `FormsModule`, then:
 ### Show BS dates only
 
 ```html
-<osn-nepali-calendar [showAdDates]="false" [showScriptToggle]="false" [showTodayButton]="false" />
+<osn-nepali-calendar
+    [showAdDates]="false"
+    [showScriptToggle]="false"
+    [showCalendarToggle]="false"
+    [showTodayButton]="false"
+/>
 ```
 
 ## Inputs and outputs
 
-| Name               | Type                         | Default                             | Description                                                         |
-| ------------------ | ---------------------------- | ----------------------------------- | ------------------------------------------------------------------- |
-| `value`            | `BsDate \| null`             | `null`                              | The selected date. Supports `[(value)]`.                            |
-| `valueChange`      | `BsDate`                     |                                     | Emits the picked date.                                              |
-| `dateSelect`       | `{ bs: BsDate; ad: AdDate }` |                                     | Emits the picked date with its AD equivalent.                       |
-| `script`           | `'nepali' \| 'roman'`        | `'nepali'`                          | The script for names and digits. Supports `[(script)]`.             |
-| `scriptChange`     | `'nepali' \| 'roman'`        |                                     | Emits when the user switches script.                                |
-| `showScriptToggle` | `boolean`                    | `true`                              | Shows the Nepali/Roman toggle button.                               |
-| `showAdDates`      | `boolean`                    | `true`                              | Shows the AD day under each BS day and the AD months in the header. |
-| `showTodayButton`  | `boolean`                    | `true`                              | Shows the button that jumps back to today's month.                  |
-| `initialMonth`     | `{ year, month } \| null`    | the selection's month, else today's | The month shown first.                                              |
-| `min`              | `BsDate \| null`             | `null`                              | The earliest date that can be picked.                               |
-| `max`              | `BsDate \| null`             | `null`                              | The latest date that can be picked.                                 |
-| `today`            | `BsDate`                     | today, local time                   | Overrides today's date, for tests and server rendering.             |
+| Name                 | Type                         | Default                             | Description                                                                  |
+| -------------------- | ---------------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| `value`              | `BsDate \| null`             | `null`                              | The selected date. Supports `[(value)]`.                                     |
+| `valueChange`        | `BsDate`                     |                                     | Emits the picked date.                                                       |
+| `dateSelect`         | `{ bs: BsDate; ad: AdDate }` |                                     | Emits the picked date with its AD equivalent.                                |
+| `script`             | `'nepali' \| 'roman'`        | `'nepali'`                          | The script for names and digits. Supports `[(script)]`.                      |
+| `scriptChange`       | `'nepali' \| 'roman'`        |                                     | Emits when the user switches script.                                         |
+| `showScriptToggle`   | `boolean`                    | `true`                              | Shows the Nepali/Roman toggle button.                                        |
+| `calendar`           | `'bs' \| 'ad'`               | `'bs'`                              | The calendar the grid follows. Supports `[(calendar)]`.                      |
+| `calendarChange`     | `'bs' \| 'ad'`               |                                     | Emits when the user switches between BS and AD.                              |
+| `showCalendarToggle` | `boolean`                    | `true`                              | Shows the BS/AD toggle button.                                               |
+| `showAdDates`        | `boolean`                    | `true`                              | Shows the other calendar's day under each day, and its months in the header. |
+| `showTodayButton`    | `boolean`                    | `true`                              | Shows the button that jumps back to today's month.                           |
+| `initialMonth`       | `{ year, month } \| null`    | the selection's month, else today's | The BS month shown first.                                                    |
+| `min`                | `BsDate \| null`             | `null`                              | The earliest date that can be picked.                                        |
+| `max`                | `BsDate \| null`             | `null`                              | The latest date that can be picked.                                          |
+| `today`              | `BsDate`                     | today, local time                   | Overrides today's date, for tests and server rendering.                      |
 
 `BsDate` and `AdDate` are `{ year, month, day }` with months from 1 to 12. The boolean inputs
 also accept attribute form, such as `showAdDates="false"`.
