@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyReleaseNotes } from './package-notes.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -107,24 +108,31 @@ if (!flag('skip-checks')) {
     run(npmCommand, ['run', 'typecheck']);
     run(npmCommand, ['test']);
 }
-run(npmCommand, ['run', 'build']);
-
+// npm shows only the README, so the release notes go into the READMEs (and a CHANGELOG.md into
+// each package) for the build and publish, and are taken out again afterwards.
+const restoreReadmes = applyReleaseNotes(core.version);
 const summary = [];
-for (const pkg of selected) {
-    // Read the manifest that is actually published (for Angular, the one ng-packagr wrote).
-    const { name, version } = readManifest(join(pkg.dir, 'package.json'));
-    if (isPublished(name, version)) {
-        console.log(`\n${name}@${version} is already on npm, skipping.`);
-        summary.push(`skipped   ${name}@${version} (already published)`);
-        continue;
-    }
+try {
+    run(npmCommand, ['run', 'build']);
 
-    const publishArgs = ['publish', '--access', 'public'];
-    if (tag) publishArgs.push('--tag', tag);
-    if (otp) publishArgs.push('--otp', otp);
-    if (dryRun) publishArgs.push('--dry-run');
-    run(npmCommand, publishArgs, { cwd: join(root, pkg.dir) });
-    summary.push(`${dryRun ? 'dry run  ' : 'published'} ${name}@${version}`);
+    for (const pkg of selected) {
+        // Read the manifest that is actually published (for Angular, the one ng-packagr wrote).
+        const { name, version } = readManifest(join(pkg.dir, 'package.json'));
+        if (isPublished(name, version)) {
+            console.log(`\n${name}@${version} is already on npm, skipping.`);
+            summary.push(`skipped   ${name}@${version} (already published)`);
+            continue;
+        }
+
+        const publishArgs = ['publish', '--access', 'public'];
+        if (tag) publishArgs.push('--tag', tag);
+        if (otp) publishArgs.push('--otp', otp);
+        if (dryRun) publishArgs.push('--dry-run');
+        run(npmCommand, publishArgs, { cwd: join(root, pkg.dir) });
+        summary.push(`${dryRun ? 'dry run  ' : 'published'} ${name}@${version}`);
+    }
+} finally {
+    restoreReadmes();
 }
 
 console.log(`\n${summary.join('\n')}`);

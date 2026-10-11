@@ -124,9 +124,15 @@ jobs:
       - name: Build, test and pack the npm packages
         if: steps.tag.outputs.kind == 'npm'
         working-directory: js
+        env:
+          TITLE: ${{ steps.tag.outputs.title }}
         run: |
           npm ci
           npm test
+          # npm shows only the README, so the release notes go into it (see scripts/package-notes.mjs).
+          # It reads them from CHANGELOG.md, which gets this release's entry first if it lacks one.
+          (cd .. && .github/scripts/update-changelog.sh "$TITLE" release-notes.md)
+          node scripts/package-notes.mjs
           npm run build
           mkdir -p ../artifacts
           npm pack --workspace packages/core --workspace packages/react --pack-destination ../artifacts
@@ -158,8 +164,12 @@ jobs:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           git fetch origin "$DEFAULT_BRANCH"
-          git checkout -B changelog "origin/$DEFAULT_BRANCH"
+          # -f drops the README and CHANGELOG.md edits the npm build made in this checkout.
+          git checkout -f -B changelog "origin/$DEFAULT_BRANCH"
           .github/scripts/update-changelog.sh "$TITLE" release-notes.md
+          if git diff --quiet CHANGELOG.md; then
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "Add $TITLE to the changelog [skip ci]"
