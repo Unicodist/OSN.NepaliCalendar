@@ -133,6 +133,7 @@ formatNepalSambat(ns, 'Y'); // 'NS 1147'
 findNepalSambatDays(1146, 12, 'thwa', 8); // [2083-07-01, 2083-07-02]
 ```
 
+`nepalSambatMonths(year)` lists the lunar months of a year with their first and last BS days, and
 `formatNepalSambatYears(first, last)` gives a header label such as `NS 1146–1147`, and
 `NEPAL_SAMBAT_MONTH_NAMES`, `TITHI_NAMES` and `tithiName()` give the names. The days follow
 Nepal's official panchang; see Accuracy below.
@@ -183,9 +184,40 @@ convertMonth(2081, 4, 'bs', 'ad'); // { year: 2024, month: 7 }, the AD month to 
 ```
 
 `shiftAdMonth`, `clampAdMonth`, `isAdMonthInRange` and `supportedAdYears` take the same `{ min, max }`
-BS range. To support both systems with one code path, `buildCalendarView(system, year, month, options)`,
-`clampCalendarMonth`, `isCalendarMonthInRange`, `calendarYears`, `calendarMonthNames` and `dayLabel`
-take a `'bs' | 'ad'` system; the components use these.
+BS range.
+
+### Any calendar: BS, AD or Nepal Sambat
+
+Each calendar is an object with the same methods, so one code path can show any of them. Look one
+up by its `CalendarType` (`'bs'`, `'ad'` or `'ns'`) with `getCalendar`, or use `BIKRAM_SAMBAT`,
+`GREGORIAN` and `NEPAL_SAMBAT`. `CALENDAR_TYPES` lists every type, for a calendar picker. The
+components are built on these, and new calendars will be added the same way.
+
+```ts
+import { CALENDAR_TYPES, CALENDARS, convertMonth, getCalendar } from '@opensourcenepal/nepali-calendar';
+
+CALENDAR_TYPES.map((type) => CALENDARS[type].name.nepali); // ['विक्रम संवत्', 'ईस्वी संवत्', 'नेपाल संवत्']
+
+const ns = getCalendar('ns');
+const month = ns.monthOf({ year: 2083, month: 7, day: 24 }); // { year: 1147, month: 1 }
+const view = ns.buildView(month.year, month.month, { script: 'roman' });
+view.otherLabel; // 'Kartik/Mangsir 2083'
+const first = view.weeks[0][2]!; // BS 2083-07-24, a Tuesday
+ns.dayNumber(first); // 1, the tithi
+ns.otherDayNumber(first); // 24, the BS day
+ns.dayLabel(first); // 'Mangalbar, NS 1147 Kachhala Thwa Paru'
+
+ns.monthNames('roman', 1146); // 13 months, with 'Anala' (the leap month) before 'Tachhala'
+ns.shiftMonth(1146, 13, 1); // { year: 1147, month: 1 }
+convertMonth(1147, 1, 'ns', 'ad'); // { year: 2026, month: 11 }, the AD month to show after switching
+```
+
+A month is `{ year, month }`, where `month` counts from 1 at the start of the year. A Nepal Sambat
+year with a leap month has 13, so there `month` is the month's place in its year, not its name.
+Every calendar also has `years(range)`, `clampMonth`, `isMonthInRange` and `midMonth`, and takes the
+same `{ min, max }` BS range. `buildCalendarView(type, year, month, options)`, `clampCalendarMonth`,
+`isCalendarMonthInRange`, `calendarYears`, `calendarMonthNames`, `dayLabel` and `monthOf` do the
+same from a type.
 
 ## Stylesheet
 

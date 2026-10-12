@@ -14,8 +14,9 @@ const meta = {
     argTypes: {
         script: { control: 'inline-radio', options: ['nepali', 'roman'] },
         defaultScript: { control: 'inline-radio', options: ['nepali', 'roman'] },
-        calendar: { control: 'inline-radio', options: ['bs', 'ad'] },
-        defaultCalendar: { control: 'inline-radio', options: ['bs', 'ad'] },
+        calendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
+        defaultCalendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
+        calendars: { control: 'check', options: ['bs', 'ad', 'ns'] },
     },
 } satisfies Meta<typeof NepaliCalendar>;
 
@@ -30,14 +31,19 @@ export const Roman: Story = {
     args: { defaultScript: 'roman' },
 };
 
-/** A Gregorian (AD) month with the BS date under each day. The BS/AD button switches back. */
+/** A Gregorian (AD) month with the BS date under each day. The calendar dropdown switches back. */
 export const AdCalendar: Story = {
     args: { defaultCalendar: 'ad', defaultScript: 'roman' },
 };
 
-/** Nepal Sambat: the lunar year in the header, and each day's full NS date in its tooltip. */
+/** A Nepal Sambat lunar month: each day shows its tithi, with the BS date under it and the full NS date in its tooltip. */
 export const NepalSambat: Story = {
-    args: { showNepalSambat: true, initialMonth: { year: 2083, month: 7 } },
+    args: { defaultCalendar: 'ns', defaultValue: { year: 2083, month: 7, day: 24 } },
+};
+
+/** Only BS and Nepal Sambat in the calendar dropdown. */
+export const ChosenCalendars: Story = {
+    args: { calendars: ['bs', 'ns'], defaultScript: 'roman' },
 };
 
 /** Opens on the month of an initially selected date. */

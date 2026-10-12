@@ -74,15 +74,14 @@
     font-weight: normal;
 }
 
-.osn-cal__title-ad,
-.osn-cal__title-ns {
+.osn-cal__title-ad {
     display: block;
     color: var(--osn-cal-muted);
     font-size: 0.75rem;
 }
 
 .osn-cal__nav,
-.osn-cal__system,
+.osn-cal__calendar,
 .osn-cal__script {
     border: 1px solid var(--osn-cal-border);
     border-radius: calc(var(--osn-cal-radius) - 2px);
@@ -95,9 +94,31 @@
 }
 
 .osn-cal__nav:hover:not(:disabled),
-.osn-cal__system:hover,
 .osn-cal__script:hover {
     background: var(--osn-cal-hover);
+}
+
+/* The calendar dropdown: a bordered select with its own arrow, so it looks the same in every browser. */
+.osn-cal__calendar {
+    appearance: none;
+    padding-right: 1.5rem;
+    background-image:
+        linear-gradient(45deg, transparent 50%, currentColor 50%),
+        linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+        right 0.75rem center,
+        right 0.5rem center;
+    background-size: 0.25rem 0.25rem;
+    background-repeat: no-repeat;
+}
+
+.osn-cal__calendar:hover {
+    background-color: var(--osn-cal-hover);
+}
+
+.osn-cal__calendar option {
+    background: var(--osn-cal-bg);
+    color: var(--osn-cal-fg);
 }
 
 .osn-cal__nav:disabled {
