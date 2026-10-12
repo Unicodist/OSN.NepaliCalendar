@@ -12,7 +12,7 @@ public class CalendarSystemTests
     [Fact]
     public void All_HasOneCalendarPerType()
     {
-        var types = Enum.GetValues(typeof(CalendarType)).Cast<CalendarType>().ToArray();
+        var types = Enum.GetValues<CalendarType>();
 
         Assert.Equal(types, CalendarSystem.All.Select(c => c.Type));
         foreach (var type in types)
