@@ -155,6 +155,16 @@ Bind `[(calendar)]` to keep it in sync with your app, or hide the button with
 <osn-nepali-calendar [(script)]="script" />
 ```
 
+### Show Nepal Sambat
+
+`showNepalSambat` adds the Nepal Sambat year to the header (`ने.सं. ११४६–११४७` when the month spans
+the NS new year) and puts each day's full NS date, such as `ने.सं. ११४७ कछलाथ्व पारू`, in its
+tooltip and accessible name.
+
+```html
+<osn-nepali-calendar showNepalSambat />
+```
+
 ### Show BS dates only
 
 ```html
@@ -181,6 +191,7 @@ Bind `[(calendar)]` to keep it in sync with your app, or hide the button with
 | `showCalendarToggle` | `boolean`                    | `true`                              | Shows the BS/AD toggle button.                                               |
 | `showAdDates`        | `boolean`                    | `true`                              | Shows the other calendar's day under each day, and its months in the header. |
 | `showTodayButton`    | `boolean`                    | `true`                              | Shows the button that jumps back to today's month.                           |
+| `showNepalSambat`    | `boolean`                    | `false`                             | Shows the Nepal Sambat year in the header and each day's NS date.            |
 | `initialMonth`       | `{ year, month } \| null`    | the selection's month, else today's | The BS month shown first.                                                    |
 | `min`                | `BsDate \| null`             | `null`                              | The earliest date that can be picked.                                        |
 | `max`                | `BsDate \| null`             | `null`                              | The latest date that can be picked.                                          |

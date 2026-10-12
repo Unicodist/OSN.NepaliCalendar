@@ -31,6 +31,22 @@ describe('NepaliCalendar', () => {
         expect(document.querySelectorAll('.osn-cal__day')).toHaveLength(32);
     });
 
+    it('shows Nepal Sambat when asked', () => {
+        render(<NepaliCalendar today={{ year: 2083, month: 7, day: 24 }} showNepalSambat />);
+
+        // Kartik 2083 spans the Nepal Sambat new year on Kartik 24 (Mha Puja).
+        expect(document.querySelector('.osn-cal__title-ns')?.textContent).toBe('ने.सं. ११४६–११४७');
+        const newYear = screen.getByRole('button', { name: 'मङ्गलबार, २४ कात्तिक २०८३, ने.सं. ११४७ कछलाथ्व पारू' });
+        expect(newYear.getAttribute('title')).toBe('ने.सं. ११४७ कछलाथ्व पारू');
+    });
+
+    it('hides Nepal Sambat by default', () => {
+        render(<NepaliCalendar today={today} />);
+
+        expect(document.querySelector('.osn-cal__title-ns')).toBeNull();
+        expect(document.querySelector('.osn-cal__day[title]')).toBeNull();
+    });
+
     it('switches to Roman script with the toggle', async () => {
         const onScriptChange = vi.fn();
         render(<NepaliCalendar today={today} onScriptChange={onScriptChange} />);

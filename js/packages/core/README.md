@@ -108,6 +108,35 @@ compareBs(a, b); // negative, 0 or positive
 isSameBs(a, b); // true when both are the same day
 ```
 
+## Nepal Sambat
+
+Every BS date also has a Nepal Sambat (नेपाल संवत्) lunar date: a year, a month, a half (`thwa`,
+bright, or `ga`, dark) and a tithi. The year starts on Kachhala Thwa Paru, the day of Mha Puja.
+
+```ts
+import {
+    findNepalSambatDays,
+    formatNepalSambat,
+    nepalSambatYear,
+    toNepalSambat,
+} from '@opensourcenepal/nepali-calendar';
+
+const mhaPuja = { year: 2083, month: 7, day: 24 }; // AD 2026-11-10
+nepalSambatYear(mhaPuja); // 1147
+const ns = toNepalSambat(mhaPuja);
+// { year: 1147, month: 1, isLeapMonth: false, paksha: 'thwa', tithi: 1, lunarDay: 1, isRepeatedTithi: false }
+formatNepalSambat(ns); // 'NS 1147 Kachhala Thwa Paru'
+formatNepalSambat(ns, 'G', 'nepali'); // 'ने.सं. ११४७ कछलाथ्व पारू'
+formatNepalSambat(ns, 'Y'); // 'NS 1147'
+
+// A tithi can be skipped (no day) or repeated (two days).
+findNepalSambatDays(1146, 12, 'thwa', 8); // [2083-07-01, 2083-07-02]
+```
+
+`formatNepalSambatYears(first, last)` gives a header label such as `NS 1146–1147`, and
+`NEPAL_SAMBAT_MONTH_NAMES`, `TITHI_NAMES` and `tithiName()` give the names. The days follow
+Nepal's official panchang; see Accuracy below.
+
 ## Building your own calendar UI
 
 `buildMonthView` lays out one BS month as weeks of seven cells, starting on Sunday, with the AD
@@ -169,6 +198,11 @@ READMEs for how to include and theme it.
 BS month lengths follow the published Nepali calendar (panchang), not a formula, so they are kept
 in a table that is checked against the .NET library. Years after BS 2083 are computed and may
 change once the official calendar for those years is published.
+
+Nepal Sambat dates take the tithi at sunrise in Kathmandu, calculated the way Nepal's panchang
+committee does it, and were checked day by day against the panchang on Hamro Patro for BS
+2067-2083. Hamro Patro's own "Nepal Sambat" line uses a modern calculation and differs on about one
+day in ten.
 
 ## License
 

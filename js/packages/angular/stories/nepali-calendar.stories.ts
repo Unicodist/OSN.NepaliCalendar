@@ -13,6 +13,7 @@ const meta: Meta<NepaliCalendarComponent> = {
         calendar: 'bs',
         showCalendarToggle: true,
         showAdDates: true,
+        showNepalSambat: false,
         showScriptToggle: true,
         showTodayButton: true,
         valueChange: fn(),
@@ -40,6 +41,11 @@ export const Roman: Story = {
 /** A Gregorian (AD) month with the BS date under each day. The BS/AD button switches back. */
 export const AdCalendar: Story = {
     args: { script: 'roman', calendar: 'ad' },
+};
+
+/** Nepal Sambat: the lunar year in the header, and each day's full NS date in its tooltip. */
+export const NepalSambat: Story = {
+    args: { showNepalSambat: true, initialMonth: { year: 2083, month: 7 } },
 };
 
 /** Opens on the month of a bound date. */

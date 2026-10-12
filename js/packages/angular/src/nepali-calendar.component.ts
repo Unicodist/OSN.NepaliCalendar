@@ -43,11 +43,14 @@ import {
     compareBs,
     convertMonth,
     dayLabel,
+    formatNepalSambat,
+    formatNepalSambatYears,
     isCalendarMonthInRange,
     isSameBs,
     monthOf,
     toAd,
     toDigits,
+    toNepalSambat,
     todayBs,
 } from '@opensourcenepal/nepali-calendar';
 
@@ -116,6 +119,9 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                 @if (showAdDates) {
                     <span class="osn-cal__title-ad" aria-live="polite">{{ view().otherLabel }}</span>
                 }
+                @if (showNepalSambat) {
+                    <span class="osn-cal__title-ns">{{ nepalSambatYears() }}</span>
+                }
             </div>
             <button
                 type="button"
@@ -157,6 +163,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                                         [class.osn-cal__day--disabled]="day.isDisabled"
                                         [attr.tabindex]="isTabStop(day) ? 0 : -1"
                                         [attr.aria-label]="label(day)"
+                                        [attr.title]="showNepalSambat ? nepalSambat(day) : null"
                                         [attr.aria-current]="day.isToday ? 'date' : null"
                                         [attr.aria-pressed]="day.isSelected"
                                         [attr.data-date]="day.key"
@@ -265,6 +272,12 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
      */
     @Input({ transform: booleanAttribute }) showAdDates = true;
 
+    /**
+     * Shows the Nepal Sambat (lunar) year in the header and each day's full Nepal Sambat date, such as
+     * NS 1147 Kachhala Thwa Paru, in its tooltip and accessible name. Defaults to `false`.
+     */
+    @Input({ transform: booleanAttribute }) showNepalSambat = false;
+
     /** Shows the button that jumps to today. Defaults to `true`. */
     @Input({ transform: booleanAttribute }) showTodayButton = true;
 
@@ -369,7 +382,21 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     }
 
     protected label(day: MonthViewDay): string {
-        return dayLabel(day, this.system(), this.activeScript());
+        const label = dayLabel(day, this.system(), this.activeScript());
+        return this.showNepalSambat ? `${label}, ${this.nepalSambat(day)}` : label;
+    }
+
+    protected nepalSambat(day: MonthViewDay): string {
+        return formatNepalSambat(toNepalSambat(day.bs), 'G', this.activeScript());
+    }
+
+    protected nepalSambatYears(): string {
+        const days = this.view()
+            .weeks.flat()
+            .filter((day): day is MonthViewDay => day !== null);
+        return days.length === 0
+            ? ''
+            : formatNepalSambatYears(days[0]!.bs, days[days.length - 1]!.bs, this.activeScript());
     }
 
     protected primaryDay(day: MonthViewDay): number {

@@ -17,6 +17,7 @@ const today: BsDate = { year: 2081, month: 4, day: 15 };
             [showCalendarToggle]="showCalendarToggle"
             [initialMonth]="initialMonth"
             [showAdDates]="showAdDates"
+            [showNepalSambat]="showNepalSambat"
             [showScriptToggle]="showScriptToggle"
             [showTodayButton]="showTodayButton"
             [min]="min"
@@ -33,6 +34,7 @@ class HostComponent {
     showCalendarToggle = true;
     initialMonth: { year: number; month: number } | null = null;
     showAdDates = true;
+    showNepalSambat = false;
     showScriptToggle = true;
     showTodayButton = true;
     min: BsDate | null = null;
@@ -108,6 +110,25 @@ describe('NepaliCalendarComponent', () => {
         expect(todayButton.getAttribute('aria-current')).toBe('date');
         expect(todayButton.querySelector('.osn-cal__day-ad')?.textContent).toBe('३०');
         expect(root.querySelectorAll('.osn-cal__day')).toHaveLength(32);
+    });
+
+    it('shows Nepal Sambat when asked', async () => {
+        const { root, button } = await setup((h) => {
+            h.today = { year: 2083, month: 7, day: 24 };
+            h.showNepalSambat = true;
+        });
+
+        // Kartik 2083 spans the Nepal Sambat new year on Kartik 24 (Mha Puja).
+        expect(root.querySelector('.osn-cal__title-ns')?.textContent).toBe('ने.सं. ११४६–११४७');
+        const newYear = button('मङ्गलबार, २४ कात्तिक २०८३, ने.सं. ११४७ कछलाथ्व पारू');
+        expect(newYear.getAttribute('title')).toBe('ने.सं. ११४७ कछलाथ्व पारू');
+    });
+
+    it('hides Nepal Sambat by default', async () => {
+        const { root } = await setup();
+
+        expect(root.querySelector('.osn-cal__title-ns')).toBeNull();
+        expect(root.querySelector('.osn-cal__day[title]')).toBeNull();
     });
 
     it('switches to Roman script with the toggle', async () => {

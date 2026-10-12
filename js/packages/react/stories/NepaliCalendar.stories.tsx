@@ -35,6 +35,11 @@ export const AdCalendar: Story = {
     args: { defaultCalendar: 'ad', defaultScript: 'roman' },
 };
 
+/** Nepal Sambat: the lunar year in the header, and each day's full NS date in its tooltip. */
+export const NepalSambat: Story = {
+    args: { showNepalSambat: true, initialMonth: { year: 2083, month: 7 } },
+};
+
 /** Opens on the month of an initially selected date. */
 export const WithSelectedDate: Story = {
     args: { defaultValue: { year: 2082, month: 6, day: 16 }, defaultScript: 'roman' },

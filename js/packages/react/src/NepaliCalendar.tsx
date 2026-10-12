@@ -18,11 +18,14 @@ import {
     clampCalendarMonth,
     convertMonth,
     dayLabel,
+    formatNepalSambat,
+    formatNepalSambatYears,
     isCalendarMonthInRange,
     isSameBs,
     monthOf,
     toAd,
     toDigits,
+    toNepalSambat,
     todayBs,
 } from '@opensourcenepal/nepali-calendar';
 
@@ -54,6 +57,11 @@ export interface NepaliCalendarProps {
      * its months in the header. Defaults to `true`.
      */
     showAdDates?: boolean;
+    /**
+     * Shows the Nepal Sambat (lunar) year in the header and each day's full Nepal Sambat date, such as
+     * NS 1147 Kachhala Thwa Paru, in its tooltip and accessible name. Defaults to `false`.
+     */
+    showNepalSambat?: boolean;
     /** Shows the button that jumps to today. Defaults to `true`. */
     showTodayButton?: boolean;
     /** The BS month shown first. Defaults to the month of the selection, or of today. */
@@ -87,6 +95,7 @@ export function NepaliCalendar({
     onCalendarChange,
     showCalendarToggle = true,
     showAdDates = true,
+    showNepalSambat = false,
     showTodayButton = true,
     initialMonth,
     min = null,
@@ -192,6 +201,8 @@ export function NepaliCalendar({
     const nepali = activeScript === 'nepali';
     const monthNames = calendarMonthNames(system, activeScript);
     const title = `${monthNames[view.month - 1]} ${toDigits(view.year, activeScript)}`;
+    const shownDays = view.weeks.flat().filter((day): day is MonthViewDay => day !== null);
+    const nepalSambat = (day: MonthViewDay) => formatNepalSambat(toNepalSambat(day.bs), 'G', activeScript);
 
     return (
         <div className={['osn-cal', className].filter(Boolean).join(' ')} lang={nepali ? 'ne' : 'en'}>
@@ -241,6 +252,15 @@ export function NepaliCalendar({
                             {view.otherLabel}
                         </span>
                     )}
+                    {showNepalSambat && shownDays.length > 0 && (
+                        <span className="osn-cal__title-ns">
+                            {formatNepalSambatYears(
+                                shownDays[0]!.bs,
+                                shownDays[shownDays.length - 1]!.bs,
+                                activeScript,
+                            )}
+                        </span>
+                    )}
                 </div>
                 <button
                     type="button"
@@ -279,7 +299,12 @@ export function NepaliCalendar({
                                             type="button"
                                             className={dayClass(day)}
                                             tabIndex={isSameBs(day.bs, tabStop) ? 0 : -1}
-                                            aria-label={dayLabel(day, system, activeScript)}
+                                            aria-label={
+                                                showNepalSambat
+                                                    ? `${dayLabel(day, system, activeScript)}, ${nepalSambat(day)}`
+                                                    : dayLabel(day, system, activeScript)
+                                            }
+                                            title={showNepalSambat ? nepalSambat(day) : undefined}
                                             aria-current={day.isToday ? 'date' : undefined}
                                             aria-pressed={day.isSelected}
                                             data-date={day.key}

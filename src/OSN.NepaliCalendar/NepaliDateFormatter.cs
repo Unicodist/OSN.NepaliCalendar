@@ -141,7 +141,7 @@ internal static class NepaliDateFormatter
         return end - start;
     }
 
-    private static void AppendNumber(StringBuilder result, int value, int minDigits, NepaliDateFormatInfo info)
+    internal static void AppendNumber(StringBuilder result, int value, int minDigits, NepaliDateFormatInfo info)
     {
         var digits = value.ToString(CultureInfo.InvariantCulture).PadLeft(minDigits, '0');
         if (!info.UsesNepaliScript)

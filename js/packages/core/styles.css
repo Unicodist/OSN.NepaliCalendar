@@ -74,7 +74,8 @@
     font-weight: normal;
 }
 
-.osn-cal__title-ad {
+.osn-cal__title-ad,
+.osn-cal__title-ns {
     display: block;
     color: var(--osn-cal-muted);
     font-size: 0.75rem;
