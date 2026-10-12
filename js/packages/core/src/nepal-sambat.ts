@@ -234,6 +234,59 @@ export function findNepalSambatDays(
     return result;
 }
 
+/** One lunar month of a Nepal Sambat year, with the BS dates of its first and last days. */
+export interface NepalSambatMonthSpan {
+    readonly year: number;
+    /** The lunar month, 1 (Kachhala) to 12 (Kaula). In a leap month this is the month being repeated. */
+    readonly month: number;
+    readonly isLeapMonth: boolean;
+    readonly first: BsDate;
+    readonly last: BsDate;
+}
+
+const monthsByYear = new Map<number, readonly NepalSambatMonthSpan[]>();
+
+/**
+ * Returns the lunar months of a Nepal Sambat year in order: usually 12, 13 with a leap month (Anala),
+ * fewer in a year with a skipped month or at the ends of the supported range, and none outside it.
+ */
+export function nepalSambatMonths(year: number): readonly NepalSambatMonthSpan[] {
+    const cached = monthsByYear.get(year);
+    if (cached) {
+        return cached;
+    }
+    const t = getTables();
+    const months: NepalSambatMonthSpan[] = [];
+    for (let i = 0; i < t.monthStarts.length; i++) {
+        if (t.years[i] !== year) {
+            continue;
+        }
+        const end = i + 1 < t.monthStarts.length ? t.monthStarts[i + 1]! : NS_DAY_COUNT;
+        months.push({
+            year,
+            month: monthNumber(i),
+            isLeapMonth: isLeap(i),
+            first: addDays(MIN_DATE, t.monthStarts[i]!),
+            last: addDays(MIN_DATE, end - 1),
+        });
+    }
+    const frozen = Object.freeze(months);
+    monthsByYear.set(year, frozen);
+    return frozen;
+}
+
+/** Returns the name of a Nepal Sambat month, such as Kachhala, or Anala for a leap month. */
+export function nepalSambatMonthName(month: number, isLeapMonth = false, script: Script = 'roman'): string {
+    if (isLeapMonth) {
+        return NEPAL_SAMBAT_LEAP_MONTH_NAME[script];
+    }
+    const name = NEPAL_SAMBAT_MONTH_NAMES[script][month - 1];
+    if (name === undefined) {
+        throw new RangeError('Month must be between 1 and 12.');
+    }
+    return name;
+}
+
 /** Returns the name of a tithi, such as Paru, Punhi or Amai. */
 export function tithiName(paksha: Paksha, tithi: number, script: Script = 'roman'): string {
     if (tithi === 15 && paksha === 'ga') {
@@ -255,9 +308,7 @@ export function tithiName(paksha: Paksha, tithi: number, script: Script = 'roman
 export function formatNepalSambat(date: NepalSambatDate, format = 'G', script: Script = 'roman'): string {
     const nepali = script === 'nepali';
     const year = `${nepali ? 'ने.सं.' : 'NS'} ${toDigits(date.year, script)}`;
-    const month = date.isLeapMonth
-        ? NEPAL_SAMBAT_LEAP_MONTH_NAME[script]
-        : NEPAL_SAMBAT_MONTH_NAMES[script][date.month - 1];
+    const month = nepalSambatMonthName(date.month, date.isLeapMonth, script);
     // Devanagari joins the half to the month, as in कछलाथ्व; Roman keeps them apart.
     const half = nepali ? (date.paksha === 'thwa' ? 'थ्व' : 'गा') : date.paksha === 'thwa' ? ' Thwa' : ' Ga';
     const day = `${month}${half} ${tithiName(date.paksha, date.tithi, script)}`;

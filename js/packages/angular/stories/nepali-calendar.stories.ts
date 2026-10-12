@@ -13,7 +13,6 @@ const meta: Meta<NepaliCalendarComponent> = {
         calendar: 'bs',
         showCalendarToggle: true,
         showAdDates: true,
-        showNepalSambat: false,
         showScriptToggle: true,
         showTodayButton: true,
         valueChange: fn(),
@@ -23,7 +22,8 @@ const meta: Meta<NepaliCalendarComponent> = {
     },
     argTypes: {
         script: { control: 'inline-radio', options: ['nepali', 'roman'] },
-        calendar: { control: 'inline-radio', options: ['bs', 'ad'] },
+        calendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
+        calendars: { control: 'check', options: ['bs', 'ad', 'ns'] },
     },
 };
 
@@ -38,14 +38,19 @@ export const Roman: Story = {
     args: { script: 'roman' },
 };
 
-/** A Gregorian (AD) month with the BS date under each day. The BS/AD button switches back. */
+/** A Gregorian (AD) month with the BS date under each day. The calendar dropdown switches back. */
 export const AdCalendar: Story = {
     args: { script: 'roman', calendar: 'ad' },
 };
 
-/** Nepal Sambat: the lunar year in the header, and each day's full NS date in its tooltip. */
+/** A Nepal Sambat lunar month: each day shows its tithi, with the BS date under it and the full NS date in its tooltip. */
 export const NepalSambat: Story = {
-    args: { showNepalSambat: true, initialMonth: { year: 2083, month: 7 } },
+    args: { calendar: 'ns', value: { year: 2083, month: 7, day: 24 } },
+};
+
+/** Only BS and Nepal Sambat in the calendar dropdown. */
+export const ChosenCalendars: Story = {
+    args: { script: 'roman', calendars: ['bs', 'ns'] },
 };
 
 /** Opens on the month of a bound date. */
@@ -84,7 +89,7 @@ export const Minimal: Story = {
     selector: 'story-two-way',
     imports: [NepaliCalendarComponent],
     template: `
-        <osn-nepali-calendar [(value)]="value" [(script)]="script" />
+        <osn-calendar [(value)]="value" [(script)]="script" />
         <p style="font-family: monospace">
             value: {{ value() ? value()!.year + '-' + value()!.month + '-' + value()!.day : 'none' }} · script:
             {{ script() }}
@@ -109,7 +114,7 @@ export const TwoWayBinding: Story = {
     selector: 'story-form-control',
     imports: [NepaliCalendarComponent, ReactiveFormsModule],
     template: `
-        <osn-nepali-calendar script="roman" [formControl]="control" />
+        <osn-calendar script="roman" [formControl]="control" />
         <p style="font-family: monospace">
             control.value:
             {{ control.value ? control.value.year + '-' + control.value.month + '-' + control.value.day : 'none' }}
@@ -140,6 +145,6 @@ export const Themed: Story = {
         styles: [
             ':host ::ng-deep .osn-cal { --osn-cal-accent: #1f6feb; --osn-cal-holiday: #1f6feb; --osn-cal-radius: 16px; }',
         ],
-        template: `<osn-nepali-calendar ${argsToTemplate(args)} />`,
+        template: `<osn-calendar ${argsToTemplate(args)} />`,
     }),
 };

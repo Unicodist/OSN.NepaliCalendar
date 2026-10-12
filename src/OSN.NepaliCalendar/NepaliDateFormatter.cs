@@ -141,6 +141,21 @@ internal static class NepaliDateFormatter
         return end - start;
     }
 
+    /// <summary>Replaces the Latin digits in a string with Devanagari ones.</summary>
+    internal static string ToNepaliDigits(string text)
+    {
+        var chars = text.ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            if (chars[i] is >= '0' and <= '9')
+            {
+                chars[i] = (char)(NepaliZero + (chars[i] - '0'));
+            }
+        }
+
+        return new string(chars);
+    }
+
     internal static void AppendNumber(StringBuilder result, int value, int minDigits, NepaliDateFormatInfo info)
     {
         var digits = value.ToString(CultureInfo.InvariantCulture).PadLeft(minDigits, '0');

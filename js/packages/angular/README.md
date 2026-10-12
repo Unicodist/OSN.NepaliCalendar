@@ -2,9 +2,9 @@
 
 A Nepali (Bikram Sambat) calendar and date picker for Angular. It shows a BS month with the AD
 date under each day, and switches between Nepali (`असोज २०८२`) and Roman (`Ashwin 2082`) script.
-A button switches the grid to AD months, with the BS date under each day.
+A dropdown switches the grid to AD (Gregorian) or Nepal Sambat (lunar) months.
 
-- BS or AD month grids, switchable by the user or with `[(calendar)]`
+- BS, AD or Nepal Sambat month grids, picked from a dropdown or with `[(calendar)]`
 - Standalone component with `[(value)]` two-way binding, `ngModel` and reactive forms
 - Month and year dropdowns covering BS 1970 to 2090, plus previous and next buttons
 - Today highlighted, a "Today" button, and arrow-key navigation between days
@@ -48,7 +48,7 @@ import { type BsDate, NepaliCalendarComponent } from '@opensourcenepal/nepali-ca
     selector: 'app-root',
     imports: [NepaliCalendarComponent, JsonPipe],
     template: `
-        <osn-nepali-calendar [(value)]="date" />
+        <osn-calendar [(value)]="date" />
         <p>Selected: {{ date() | json }}</p>
     `,
 })
@@ -65,7 +65,7 @@ This shows today's month in Nepali script. Clicking a day sets `date` to the BS 
 ### Get the AD date too
 
 ```html
-<osn-nepali-calendar (dateSelect)="onPick($event.bs, $event.ad)" />
+<osn-calendar (dateSelect)="onPick($event.bs, $event.ad)" />
 ```
 
 ```ts
@@ -83,7 +83,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     imports: [NepaliCalendarComponent, ReactiveFormsModule],
-    template: `<osn-nepali-calendar [formControl]="dateOfBirth" />`,
+    template: `<osn-calendar [formControl]="dateOfBirth" />`,
 })
 export class ProfileForm {
     readonly dateOfBirth = new FormControl<BsDate | null>({ year: 2050, month: 1, day: 1 });
@@ -98,7 +98,7 @@ export class ProfileForm {
 arrows and arrow keys stop at them, and the year and month pickers only offer months in range.
 
 ```html
-<osn-nepali-calendar [min]="{ year: 2082, month: 1, day: 1 }" [max]="{ year: 2082, month: 12, day: 30 }" />
+<osn-calendar [min]="{ year: 2082, month: 1, day: 1 }" [max]="{ year: 2082, month: 12, day: 30 }" />
 ```
 
 In a form, a value outside the range (set from code, or left over after `min` or `max` changed)
@@ -108,7 +108,7 @@ makes the control invalid with a `minDate` or `maxDate` error:
 @Component({
     imports: [NepaliCalendarComponent, ReactiveFormsModule],
     template: `
-        <osn-nepali-calendar [max]="today" [formControl]="dateOfBirth" />
+        <osn-calendar [max]="today" [formControl]="dateOfBirth" />
         @if (dateOfBirth.hasError('maxDate')) {
             <p>The date of birth can't be in the future.</p>
         }
@@ -127,53 +127,52 @@ The error value is `{ min, actual }` or `{ max, actual }`.
 Import `FormsModule`, then:
 
 ```html
-<osn-nepali-calendar [(ngModel)]="date" name="date" />
+<osn-calendar [(ngModel)]="date" name="date" />
 ```
 
 ### Start in Roman script, on a given month
 
 ```html
-<osn-nepali-calendar script="roman" [initialMonth]="{ year: 2082, month: 1 }" />
+<osn-calendar script="roman" [initialMonth]="{ year: 2082, month: 1 }" />
 ```
 
-### Switch between BS and AD
+### Switch calendars: BS, AD and Nepal Sambat
 
-The toolbar has a button that switches the grid between BS months and AD (Gregorian) months.
-In AD, each day shows its AD date with the BS date under it, and the header shows the BS months
-it spans. The value is still a `BsDate`, and `dateSelect` still emits both dates.
+The toolbar has a dropdown that switches the grid between calendars:
+
+- `bs`: Bikram Sambat (विक्रम संवत्), the default, with the AD date under each day.
+- `ad`: Gregorian (ईस्वी संवत्), with the BS date under each day.
+- `ns`: Nepal Sambat (नेपाल संवत्), the lunar calendar. Each day shows its tithi, with the BS date under
+  it and the full NS date, such as `ने.सं. ११४७ कछलाथ्व पारू`, in its tooltip. A year with a leap
+  month (Anala) has 13 months in the month picker.
+
+The header shows the other calendar's months that the grid spans. The value is always a `BsDate`,
+and `dateSelect` still emits both the BS and AD dates.
 
 ```html
-<osn-nepali-calendar calendar="ad" />
+<osn-calendar calendar="ns" />
 ```
 
-Bind `[(calendar)]` to keep it in sync with your app, or hide the button with
-`[showCalendarToggle]="false"` to always show one calendar.
+Pick which calendars the dropdown offers with `calendars`, bind `[(calendar)]` to keep it in sync
+with your app, or hide the dropdown with `[showCalendarToggle]="false"` to always show one calendar.
+The dropdown also hides when `calendars` has only one:
+
+```html
+<osn-calendar [calendars]="['bs', 'ns']" [(calendar)]="calendar" />
+```
+
+`<osn-nepali-calendar>` still works too: it is the same component under its old name.
 
 ### Keep the script in sync with your app
 
 ```html
-<osn-nepali-calendar [(script)]="script" />
-```
-
-### Show Nepal Sambat
-
-`showNepalSambat` adds the Nepal Sambat year to the header (`ने.सं. ११४६–११४७` when the month spans
-the NS new year) and puts each day's full NS date, such as `ने.सं. ११४७ कछलाथ्व पारू`, in its
-tooltip and accessible name.
-
-```html
-<osn-nepali-calendar showNepalSambat />
+<osn-calendar [(script)]="script" />
 ```
 
 ### Show BS dates only
 
 ```html
-<osn-nepali-calendar
-    [showAdDates]="false"
-    [showScriptToggle]="false"
-    [showCalendarToggle]="false"
-    [showTodayButton]="false"
-/>
+<osn-calendar [showAdDates]="false" [showScriptToggle]="false" [showCalendarToggle]="false" [showTodayButton]="false" />
 ```
 
 ## Inputs and outputs
@@ -186,12 +185,12 @@ tooltip and accessible name.
 | `script`             | `'nepali' \| 'roman'`        | `'nepali'`                          | The script for names and digits. Supports `[(script)]`.                      |
 | `scriptChange`       | `'nepali' \| 'roman'`        |                                     | Emits when the user switches script.                                         |
 | `showScriptToggle`   | `boolean`                    | `true`                              | Shows the Nepali/Roman toggle button.                                        |
-| `calendar`           | `'bs' \| 'ad'`               | `'bs'`                              | The calendar the grid follows. Supports `[(calendar)]`.                      |
-| `calendarChange`     | `'bs' \| 'ad'`               |                                     | Emits when the user switches between BS and AD.                              |
-| `showCalendarToggle` | `boolean`                    | `true`                              | Shows the BS/AD toggle button.                                               |
+| `calendar`           | `'bs' \| 'ad' \| 'ns'`       | `'bs'`                              | The calendar the grid follows. Supports `[(calendar)]`.                      |
+| `calendarChange`     | `'bs' \| 'ad' \| 'ns'`       |                                     | Emits when the user picks another calendar.                                  |
+| `calendars`          | `CalendarType[]`             | `['bs', 'ad', 'ns']`                | The calendars the dropdown offers, in order.                                 |
+| `showCalendarToggle` | `boolean`                    | `true`                              | Shows the calendar dropdown.                                                 |
 | `showAdDates`        | `boolean`                    | `true`                              | Shows the other calendar's day under each day, and its months in the header. |
 | `showTodayButton`    | `boolean`                    | `true`                              | Shows the button that jumps back to today's month.                           |
-| `showNepalSambat`    | `boolean`                    | `false`                             | Shows the Nepal Sambat year in the header and each day's NS date.            |
 | `initialMonth`       | `{ year, month } \| null`    | the selection's month, else today's | The BS month shown first.                                                    |
 | `min`                | `BsDate \| null`             | `null`                              | The earliest date that can be picked.                                        |
 | `max`                | `BsDate \| null`             | `null`                              | The latest date that can be picked.                                          |
