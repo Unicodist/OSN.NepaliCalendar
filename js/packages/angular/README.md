@@ -147,7 +147,8 @@ The toolbar has a dropdown that switches the grid between calendars:
   month (Anala) has 13 months in the month picker.
 
 The header shows the other calendar's months that the grid spans. The value is always a `BsDate`,
-and `dateSelect` still emits both the BS and AD dates.
+because two days can share one Nepal Sambat date when a tithi repeats. `dateSelect` emits the date
+in every calendar: `{ bs, ad, ns }`, where `ns` is a `NepalSambatDate` you can show with `formatNepalSambat(ns)`.
 
 ```html
 <osn-calendar calendar="ns" />
@@ -177,24 +178,24 @@ The dropdown also hides when `calendars` has only one:
 
 ## Inputs and outputs
 
-| Name                 | Type                         | Default                             | Description                                                                  |
-| -------------------- | ---------------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
-| `value`              | `BsDate \| null`             | `null`                              | The selected date. Supports `[(value)]`.                                     |
-| `valueChange`        | `BsDate`                     |                                     | Emits the picked date.                                                       |
-| `dateSelect`         | `{ bs: BsDate; ad: AdDate }` |                                     | Emits the picked date with its AD equivalent.                                |
-| `script`             | `'nepali' \| 'roman'`        | `'nepali'`                          | The script for names and digits. Supports `[(script)]`.                      |
-| `scriptChange`       | `'nepali' \| 'roman'`        |                                     | Emits when the user switches script.                                         |
-| `showScriptToggle`   | `boolean`                    | `true`                              | Shows the Nepali/Roman toggle button.                                        |
-| `calendar`           | `'bs' \| 'ad' \| 'ns'`       | `'bs'`                              | The calendar the grid follows. Supports `[(calendar)]`.                      |
-| `calendarChange`     | `'bs' \| 'ad' \| 'ns'`       |                                     | Emits when the user picks another calendar.                                  |
-| `calendars`          | `CalendarType[]`             | `['bs', 'ad', 'ns']`                | The calendars the dropdown offers, in order.                                 |
-| `showCalendarToggle` | `boolean`                    | `true`                              | Shows the calendar dropdown.                                                 |
-| `showAdDates`        | `boolean`                    | `true`                              | Shows the other calendar's day under each day, and its months in the header. |
-| `showTodayButton`    | `boolean`                    | `true`                              | Shows the button that jumps back to today's month.                           |
-| `initialMonth`       | `{ year, month } \| null`    | the selection's month, else today's | The BS month shown first.                                                    |
-| `min`                | `BsDate \| null`             | `null`                              | The earliest date that can be picked.                                        |
-| `max`                | `BsDate \| null`             | `null`                              | The latest date that can be picked.                                          |
-| `today`              | `BsDate`                     | today, local time                   | Overrides today's date, for tests and server rendering.                      |
+| Name                 | Type                                              | Default                             | Description                                                                  |
+| -------------------- | ------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| `value`              | `BsDate \| null`                                  | `null`                              | The selected date. Supports `[(value)]`.                                     |
+| `valueChange`        | `BsDate`                                          |                                     | Emits the picked date.                                                       |
+| `dateSelect`         | `{ bs: BsDate; ad: AdDate; ns: NepalSambatDate }` |                                     | Emits the picked date with its AD and Nepal Sambat dates.                    |
+| `script`             | `'nepali' \| 'roman'`                             | `'nepali'`                          | The script for names and digits. Supports `[(script)]`.                      |
+| `scriptChange`       | `'nepali' \| 'roman'`                             |                                     | Emits when the user switches script.                                         |
+| `showScriptToggle`   | `boolean`                                         | `true`                              | Shows the Nepali/Roman toggle button.                                        |
+| `calendar`           | `'bs' \| 'ad' \| 'ns'`                            | `'bs'`                              | The calendar the grid follows. Supports `[(calendar)]`.                      |
+| `calendarChange`     | `'bs' \| 'ad' \| 'ns'`                            |                                     | Emits when the user picks another calendar.                                  |
+| `calendars`          | `CalendarType[]`                                  | `['bs', 'ad', 'ns']`                | The calendars the dropdown offers, in order.                                 |
+| `showCalendarToggle` | `boolean`                                         | `true`                              | Shows the calendar dropdown.                                                 |
+| `showAdDates`        | `boolean`                                         | `true`                              | Shows the other calendar's day under each day, and its months in the header. |
+| `showTodayButton`    | `boolean`                                         | `true`                              | Shows the button that jumps back to today's month.                           |
+| `initialMonth`       | `{ year, month } \| null`                         | the selection's month, else today's | The BS month shown first.                                                    |
+| `min`                | `BsDate \| null`                                  | `null`                              | The earliest date that can be picked.                                        |
+| `max`                | `BsDate \| null`                                  | `null`                              | The latest date that can be picked.                                          |
+| `today`              | `BsDate`                                          | today, local time                   | Overrides today's date, for tests and server rendering.                      |
 
 `BsDate` and `AdDate` are `{ year, month, day }` with months from 1 to 12. The boolean inputs
 also accept attribute form, such as `showAdDates="false"`.

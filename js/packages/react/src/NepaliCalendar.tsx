@@ -11,6 +11,7 @@ import {
     MAX_DATE,
     MIN_DATE,
     type MonthViewDay,
+    type NepalSambatDate,
     type Script,
     addDays,
     clampBs,
@@ -19,6 +20,7 @@ import {
     isSameBs,
     toAd,
     toDigits,
+    toNepalSambat,
     todayBs,
 } from '@opensourcenepal/nepali-calendar';
 
@@ -27,8 +29,11 @@ export interface NepaliCalendarProps {
     value?: BsDate | null;
     /** The initially selected date when the selection is not controlled. */
     defaultValue?: BsDate | null;
-    /** Called when the user picks a day, with the BS date and its AD equivalent. */
-    onChange?: (date: BsDate, ad: AdDate) => void;
+    /**
+     * Called when the user picks a day, with its BS date, AD date and Nepal Sambat date. The value is
+     * always the BS date, whichever calendar is shown, because two days can share one NS date.
+     */
+    onChange?: (date: BsDate, ad: AdDate, ns: NepalSambatDate) => void;
     /** The script for names and digits. Pass it with `onScriptChange` to control it. */
     script?: Script;
     /** The initial script when it is not controlled. Defaults to `nepali`. */
@@ -139,7 +144,7 @@ export function NepaliCalendar({
         if (value === undefined) {
             setUncontrolledValue(day);
         }
-        onChange?.(day, toAd(day));
+        onChange?.(day, toAd(day), toNepalSambat(day));
     };
 
     const toggleScript = () => {

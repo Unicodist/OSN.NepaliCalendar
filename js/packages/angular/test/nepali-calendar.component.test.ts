@@ -1,6 +1,7 @@
 import { Component, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type BsDate, type CalendarType, NepaliCalendarComponent, type Script } from '../src/public-api';
 
@@ -135,6 +136,21 @@ describe('NepaliCalendarComponent', () => {
         expect(newYear.querySelector('.osn-cal__day-ad')?.textContent).toBe('२४');
     });
 
+    it('reports the Nepal Sambat date of a picked day', async () => {
+        const { host, button, stable } = await setup((h) =>
+            Object.assign(h, { today: { year: 2083, month: 7, day: 24 }, script: 'roman', calendar: 'ns' }),
+        );
+
+        button('Mangalbar, NS 1147 Kachhala Thwa Paru').click();
+        await stable();
+        expect(host.value).toEqual({ year: 2083, month: 7, day: 24 });
+        expect(host.picked).toEqual({
+            bs: { year: 2083, month: 7, day: 24 },
+            ad: { year: 2026, month: 11, day: 10 },
+            ns: expect.objectContaining({ year: 1147, month: 1, isLeapMonth: false, paksha: 'thwa', tithi: 1 }),
+        });
+    });
+
     it('lists a Nepal Sambat leap month in the month picker', async () => {
         const { root, click, title } = await setup((h) =>
             Object.assign(h, { today: { year: 2083, month: 2, day: 10 }, script: 'roman', calendar: 'ns' }),
@@ -216,7 +232,11 @@ describe('NepaliCalendarComponent', () => {
         await click('Budhabar, 2 Shrawan 2081');
 
         expect(host.value).toEqual({ year: 2081, month: 4, day: 2 });
-        expect(host.picked).toEqual({ bs: { year: 2081, month: 4, day: 2 }, ad: { year: 2024, month: 7, day: 17 } });
+        expect(host.picked).toEqual({
+            bs: { year: 2081, month: 4, day: 2 },
+            ad: { year: 2024, month: 7, day: 17 },
+            ns: toNepalSambat({ year: 2081, month: 4, day: 2 }),
+        });
         expect(button('Budhabar, 2 Shrawan 2081').getAttribute('aria-pressed')).toBe('true');
     });
 
@@ -422,6 +442,7 @@ describe('NepaliCalendarComponent', () => {
             expect(host.picked).toEqual({
                 bs: { year: 2081, month: 5, day: 4 },
                 ad: { year: 2024, month: 8, day: 20 },
+                ns: toNepalSambat({ year: 2081, month: 5, day: 4 }),
             });
         });
 

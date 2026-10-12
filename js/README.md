@@ -42,7 +42,7 @@ function Example() {
 }
 ```
 
-Props: `value`/`defaultValue`/`onChange(bs, ad)`, `script`/`defaultScript`/`onScriptChange`,
+Props: `value`/`defaultValue`/`onChange(bs, ad, ns)`, `script`/`defaultScript`/`onScriptChange`,
 `calendar`/`defaultCalendar`/`onCalendarChange`, `showScriptToggle`, `showCalendarToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `min`, `max`, `today`, `className`.
 
@@ -62,7 +62,7 @@ export class Example {
 
 Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar-angular/styles.css"]`). The
 component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
-`[(script)]`, `[(calendar)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showCalendarToggle`, `showAdDates`,
+`[(script)]`, `[(calendar)]`, `(dateSelect)` with `{ bs, ad, ns }`, `showScriptToggle`, `showCalendarToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `min`, `max` (with `minDate`/`maxDate` form errors), `today`.
 
 ## Theming

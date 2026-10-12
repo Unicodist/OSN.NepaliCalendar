@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
-import { type BsDate, NepaliCalendar, type Script } from '../src/index.js';
+import { type BsDate, NepaliCalendar, type NepalSambatDate, type Script, formatNepalSambat } from '../src/index.js';
 
 const meta = {
     title: 'NepaliCalendar',
@@ -36,9 +37,34 @@ export const AdCalendar: Story = {
     args: { defaultCalendar: 'ad', defaultScript: 'roman' },
 };
 
-/** A Nepal Sambat lunar month: each day shows its tithi, with the BS date under it and the full NS date in its tooltip. */
+/**
+ * A Nepal Sambat lunar month: each day shows its tithi, with the BS date under it and the full NS date in
+ * its tooltip. `value` stays a BS date, since two days can share one NS date; `onChange` also gets the
+ * NS date, mirrored below the calendar.
+ */
 export const NepalSambat: Story = {
-    args: { defaultCalendar: 'ns', defaultValue: { year: 2083, month: 7, day: 24 } },
+    args: { defaultCalendar: 'ns', defaultScript: 'roman' },
+    render: function Render(args) {
+        const start: BsDate = { year: 2083, month: 7, day: 24 };
+        const [value, setValue] = useState<BsDate | null>(start);
+        const [ns, setNs] = useState<NepalSambatDate>(() => toNepalSambat(start));
+        return (
+            <div>
+                <NepaliCalendar
+                    {...args}
+                    value={value}
+                    onChange={(bs, ad, nsDate) => {
+                        setValue(bs);
+                        setNs(nsDate);
+                        args.onChange?.(bs, ad, nsDate);
+                    }}
+                />
+                <p style={{ fontFamily: 'monospace' }}>
+                    value: {value ? `${value.year}-${value.month}-${value.day}` : 'none'} · NS: {formatNepalSambat(ns)}
+                </p>
+            </div>
+        );
+    },
 };
 
 /** Only BS and Nepal Sambat in the calendar dropdown. */
@@ -89,9 +115,9 @@ export const Controlled: Story = {
                     {...args}
                     value={value}
                     script={script}
-                    onChange={(bs, ad) => {
+                    onChange={(bs, ad, ns) => {
                         setValue(bs);
-                        args.onChange?.(bs, ad);
+                        args.onChange?.(bs, ad, ns);
                     }}
                     onScriptChange={(next) => {
                         setScript(next);

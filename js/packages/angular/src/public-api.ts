@@ -5,5 +5,7 @@ export {
     CALENDAR_TYPES,
     type CalendarSystem,
     type CalendarType,
+    type NepalSambatDate,
     type Script,
+    formatNepalSambat,
 } from '@opensourcenepal/nepali-calendar';

@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type BsDate, NepaliCalendar } from '../src/index.js';
@@ -42,6 +43,25 @@ describe('NepaliCalendar', () => {
         expect(newYear.getAttribute('aria-current')).toBe('date');
         expect(newYear.querySelector('.osn-cal__day-bs')?.textContent).toBe('१');
         expect(newYear.querySelector('.osn-cal__day-ad')?.textContent).toBe('२४');
+    });
+
+    it('reports the Nepal Sambat date of a picked day', async () => {
+        const onChange = vi.fn();
+        render(
+            <NepaliCalendar
+                today={{ year: 2083, month: 7, day: 24 }}
+                defaultScript="roman"
+                calendar="ns"
+                onChange={onChange}
+            />,
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Mangalbar, NS 1147 Kachhala Thwa Paru' }));
+        expect(onChange).toHaveBeenCalledWith(
+            { year: 2083, month: 7, day: 24 },
+            { year: 2026, month: 11, day: 10 },
+            expect.objectContaining({ year: 1147, month: 1, isLeapMonth: false, paksha: 'thwa', tithi: 1 }),
+        );
     });
 
     it('lists a Nepal Sambat leap month in the month picker', async () => {
@@ -116,7 +136,11 @@ describe('NepaliCalendar', () => {
         const day = screen.getByRole('button', { name: 'Budhabar, 2 Shrawan 2081' });
         await userEvent.click(day);
 
-        expect(onChange).toHaveBeenCalledWith({ year: 2081, month: 4, day: 2 }, { year: 2024, month: 7, day: 17 });
+        expect(onChange).toHaveBeenCalledWith(
+            { year: 2081, month: 4, day: 2 },
+            { year: 2024, month: 7, day: 17 },
+            toNepalSambat({ year: 2081, month: 4, day: 2 }),
+        );
         expect(day.getAttribute('aria-pressed')).toBe('true');
     });
 
@@ -192,7 +216,7 @@ describe('NepaliCalendar', () => {
             expect(onChange).not.toHaveBeenCalled();
 
             await userEvent.click(screen.getByRole('button', { name: /, 10 Shrawan 2081$/ }));
-            expect(onChange).toHaveBeenCalledWith(min, { year: 2024, month: 7, day: 25 });
+            expect(onChange).toHaveBeenCalledWith(min, { year: 2024, month: 7, day: 25 }, toNepalSambat(min));
         });
 
         it('stops month navigation and limits the pickers to the range', async () => {
@@ -268,7 +292,11 @@ describe('NepaliCalendar', () => {
             expect(title()).toBe('August 2024');
 
             await userEvent.click(screen.getByRole('button', { name: /, 20 August 2024$/ }));
-            expect(onChange).toHaveBeenCalledWith({ year: 2081, month: 5, day: 4 }, { year: 2024, month: 8, day: 20 });
+            expect(onChange).toHaveBeenCalledWith(
+                { year: 2081, month: 5, day: 4 },
+                { year: 2024, month: 8, day: 20 },
+                toNepalSambat({ year: 2081, month: 5, day: 4 }),
+            );
 
             await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Calendar' }), 'bs');
             expect(title()).toBe('Bhadra 2081');

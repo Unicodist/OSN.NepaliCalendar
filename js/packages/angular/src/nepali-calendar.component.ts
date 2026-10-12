@@ -35,6 +35,7 @@ import {
     MAX_DATE,
     MIN_DATE,
     type MonthViewDay,
+    type NepalSambatDate,
     type Script,
     addDays,
     clampBs,
@@ -44,6 +45,7 @@ import {
     isSameBs,
     toAd,
     toDigits,
+    toNepalSambat,
     todayBs,
 } from '@opensourcenepal/nepali-calendar';
 
@@ -229,8 +231,11 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     /** Emits the picked BS date. */
     @Output() readonly valueChange = new EventEmitter<BsDate>();
 
-    /** Emits the picked date with its AD equivalent. */
-    @Output() readonly dateSelect = new EventEmitter<{ bs: BsDate; ad: AdDate }>();
+    /**
+     * Emits the picked date in every calendar: BS, AD and Nepal Sambat. `value` is always the BS date,
+     * whichever calendar is shown, because two days can share one NS date.
+     */
+    @Output() readonly dateSelect = new EventEmitter<{ bs: BsDate; ad: AdDate; ns: NepalSambatDate }>();
 
     /** The script for names and digits. Defaults to `nepali`; supports `[(script)]`. */
     @Input() set script(value: Script | null | undefined) {
@@ -407,7 +412,7 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     protected select(day: BsDate): void {
         this.selected.set(day);
         this.valueChange.emit(day);
-        this.dateSelect.emit({ bs: day, ad: toAd(day) });
+        this.dateSelect.emit({ bs: day, ad: toAd(day), ns: toNepalSambat(day) });
         this.onChange(day);
         this.onTouched();
     }
