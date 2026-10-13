@@ -62,6 +62,8 @@ one), three days per character, and one character per lunar month for its name a
   method. Those years are the model's output.
 - **After BS 2083** no panchang has been published, so the table is the model's output. BS 2085 is
   unusual: the model gives a leap Kachhala (BS 2085-07-03 to 08-01), a skipped Pohela and a leap
-  Chaula. Re-check it when the panchang for that year comes out.
+  Chaula. Following the year rule, the leap Kachhala is the 13th month of NS 1148, and NS 1149
+  starts at the ordinary Kachhala (BS 2085-08-02). Re-check all of this when the panchang for that
+  year comes out.
 - **Mha Puja** is celebrated on the day Kachhala Thwa Paru begins by the evening. When the new moon
   ends after sunrise (BS 2076, 2077) the festival falls a day before the NS new-year date.

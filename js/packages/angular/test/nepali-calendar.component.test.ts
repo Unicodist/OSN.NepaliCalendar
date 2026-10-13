@@ -152,16 +152,28 @@ describe('NepaliCalendarComponent', () => {
     });
 
     it('lists a Nepal Sambat leap month in the month picker', async () => {
-        const { root, click, title } = await setup((h) =>
+        const { root, click, title, stable } = await setup((h) =>
             Object.assign(h, { today: { year: 2083, month: 2, day: 10 }, script: 'roman', calendar: 'ns' }),
         );
 
-        expect(title()).toBe('Anala 1146');
+        expect(title()).toBe('Anala (Tachhala) 1146');
         const months = root.querySelector<HTMLSelectElement>('.osn-cal__select--month')!;
-        expect([...months.options].map((o) => o.text.trim()).slice(6, 9)).toEqual(['Bachhala', 'Anala', 'Tachhala']);
+        expect([...months.options].map((o) => o.text.trim()).slice(6, 9)).toEqual([
+            'Bachhala',
+            'Anala (Tachhala)',
+            'Tachhala',
+        ]);
 
         await click('Next month');
         expect(title()).toBe('Tachhala 1146');
+
+        // The year picker keeps the month by name, not by place.
+        const years = root.querySelector<HTMLSelectElement>('.osn-cal__select--year')!;
+        years.value = '1147';
+        years.dispatchEvent(new Event('change'));
+        await stable();
+        expect(title()).toBe('Tachhala 1147');
+        expect(root.querySelector('.osn-cal__day--punhi')).not.toBeNull();
     });
 
     it('switches to Roman script with the toggle', async () => {
@@ -306,6 +318,8 @@ describe('NepaliCalendarComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(find('Shukrabar, 5 Baisakh 2082').disabled).toBe(true);
+        expect(root.querySelector<HTMLSelectElement>('.osn-cal__calendar')!.disabled).toBe(true);
+        expect(root.querySelector<HTMLButtonElement>('.osn-cal__script')!.disabled).toBe(true);
     });
 
     describe('min and max', () => {

@@ -105,7 +105,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                         class="osn-cal__select osn-cal__select--year"
                         [attr.aria-label]="nepali() ? 'साल' : 'Year'"
                         [disabled]="disabled()"
-                        (change)="jumpTo(+$any($event.target).value, view().month)"
+                        (change)="jumpToYear(+$any($event.target).value)"
                     >
                         @for (year of years(); track year) {
                             <option [value]="year" [selected]="year === view().year">{{ digits(year) }}</option>
@@ -149,7 +149,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                                 <td class="osn-cal__cell">
                                     <button
                                         type="button"
-                                        class="osn-cal__day"
+                                        [class]="dayClass(day)"
                                         [class.osn-cal__day--saturday]="day.dayOfWeek === 6"
                                         [class.osn-cal__day--today]="day.isToday"
                                         [class.osn-cal__day--selected]="day.isSelected"
@@ -192,6 +192,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                         <select
                             class="osn-cal__calendar"
                             [attr.aria-label]="nepali() ? 'पात्रो' : 'Calendar'"
+                            [disabled]="disabled()"
                             (change)="changeCalendar($any($event.target).value)"
                         >
                             @for (type of calendarOptions(); track type) {
@@ -205,6 +206,7 @@ const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRigh
                         <button
                             type="button"
                             class="osn-cal__script"
+                            [disabled]="disabled()"
                             [attr.aria-label]="nepali() ? 'Show in Roman script' : 'नेपालीमा देखाउनुहोस्'"
                             (click)="toggleScript()"
                         >
@@ -397,6 +399,15 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
         return CALENDARS[type].name[this.activeScript()];
     }
 
+    protected dayClass(day: MonthViewDay): string {
+        return [
+            'osn-cal__day',
+            ...this.cal()
+                .dayMarkers(day)
+                .map((marker) => `osn-cal__day--${marker}`),
+        ].join(' ');
+    }
+
     protected primaryDay(day: MonthViewDay): number {
         return this.cal().dayNumber(day);
     }
@@ -447,6 +458,15 @@ export class NepaliCalendarComponent implements OnChanges, ControlValueAccessor,
     protected jumpTo(year: number, month: number): void {
         this.focused.set(null);
         this.show(year, month);
+    }
+
+    protected jumpToYear(year: number): void {
+        this.focused.set(null);
+        const view = this.view();
+        this.visible.set({
+            system: this.system(),
+            ...this.cal().moveToYear(view.year, view.month, year, this.range()),
+        });
     }
 
     protected goToToday(): void {

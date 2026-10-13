@@ -67,12 +67,23 @@ describe('NepaliCalendar', () => {
     it('lists a Nepal Sambat leap month in the month picker', async () => {
         render(<NepaliCalendar today={{ year: 2083, month: 2, day: 10 }} defaultScript="roman" calendar="ns" />);
 
-        expect(title()).toBe('Anala 1146');
+        expect(title()).toBe('Anala (Tachhala) 1146');
         const months = screen.getByRole('combobox', { name: 'Month' }) as HTMLSelectElement;
-        expect([...months.options].map((o) => o.text).slice(6, 9)).toEqual(['Bachhala', 'Anala', 'Tachhala']);
+        expect([...months.options].map((o) => o.text).slice(6, 9)).toEqual([
+            'Bachhala',
+            'Anala (Tachhala)',
+            'Tachhala',
+        ]);
 
         await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
         expect(title()).toBe('Tachhala 1146');
+
+        // The year picker keeps the month by name, not by place.
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Year' }), '1147');
+        expect(title()).toBe('Tachhala 1147');
+        // Punhi spans two sunrises this month, so two days are marked.
+        expect(document.querySelectorAll('.osn-cal__day--punhi')).toHaveLength(2);
+        expect(document.querySelectorAll('.osn-cal__day--amai')).toHaveLength(1);
     });
 
     it('switches to Roman script with the toggle', async () => {

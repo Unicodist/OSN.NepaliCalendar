@@ -211,6 +211,23 @@
     font-size: 0.6875rem;
 }
 
+/* Nepal Sambat: a filled dot marks the full moon (Punhi) and a hollow one the new moon (Amai). */
+.osn-cal__day--punhi .osn-cal__day-bs::after,
+.osn-cal__day--amai .osn-cal__day-bs::after {
+    content: '';
+    display: inline-block;
+    width: 0.375em;
+    height: 0.375em;
+    margin-left: 0.125em;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    vertical-align: super;
+}
+
+.osn-cal__day--punhi .osn-cal__day-bs::after {
+    background: currentColor;
+}
+
 .osn-cal__day--today {
     border-color: var(--osn-cal-accent);
 }

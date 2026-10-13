@@ -60,6 +60,12 @@ export interface CalendarDefinition {
     clampMonth(year: number, month: number, range?: DateRange): YearMonth;
     /** Moves a month by `delta` months, clamped to the supported range and to `range`. */
     shiftMonth(year: number, month: number, delta: number, range?: DateRange): YearMonth;
+    /**
+     * The month of `toYear` with the same name as `month` of `year`, for a year picker, clamped to the
+     * supported range and to `range`. For Nepal Sambat this follows the month's name rather than its
+     * place, since a leap month moves the later months down one place.
+     */
+    moveToYear(year: number, month: number, toYear: number, range?: DateRange): YearMonth;
     /** Whether any day of a month lies inside the supported range and `range`. */
     isMonthInRange(year: number, month: number, range?: DateRange): boolean;
     /** A day near the middle of a month, used to keep the same days in view when switching calendars. */
@@ -72,7 +78,14 @@ export interface CalendarDefinition {
     otherDayNumber(day: MonthViewDay): number;
     /** A full name for a day, such as `Mangalbar, 15 Shrawan 2081`, for screen readers and tooltips. */
     dayLabel(day: MonthViewDay, script?: Script): string;
+    /**
+     * Extra markers for a day, which components add as `osn-cal__day--{marker}` classes. Nepal Sambat
+     * days get their paksha (`thwa` or `ga`), plus `punhi` on the full moon and `amai` on the new moon.
+     */
+    dayMarkers(day: MonthViewDay): readonly string[];
 }
+
+const NO_MARKERS: readonly string[] = Object.freeze([]);
 
 /** Bikram Sambat (विक्रम संवत्), Nepal's official solar calendar. */
 export const BIKRAM_SAMBAT: CalendarDefinition = Object.freeze({
@@ -85,6 +98,8 @@ export const BIKRAM_SAMBAT: CalendarDefinition = Object.freeze({
     clampMonth: (year: number, month: number, range: DateRange = {}) => clampMonth(year, month, range),
     shiftMonth: (year: number, month: number, delta: number, range: DateRange = {}) =>
         shiftMonth(year, month, delta, range),
+    moveToYear: (_year: number, month: number, toYear: number, range: DateRange = {}) =>
+        clampMonth(toYear, month, range),
     isMonthInRange: (year: number, month: number, range: DateRange = {}) => isMonthInRange(year, month, range),
     midMonth: (year: number, month: number) => clampToSupported({ year, month, day: 15 }),
     buildView(year: number, month: number, options: MonthViewOptions = {}): CalendarView {
@@ -94,6 +109,7 @@ export const BIKRAM_SAMBAT: CalendarDefinition = Object.freeze({
     dayNumber: (day: MonthViewDay) => day.bs.day,
     otherDayNumber: (day: MonthViewDay) => day.ad.day,
     dayLabel: (day: MonthViewDay, script: Script = 'roman') => formatBs(day.bs, 'F', script),
+    dayMarkers: () => NO_MARKERS,
 });
 
 /** The Gregorian calendar (ईस्वी संवत्, AD). */
@@ -110,6 +126,8 @@ export const GREGORIAN: CalendarDefinition = Object.freeze({
     clampMonth: (year: number, month: number, range: DateRange = {}) => clampAdMonth(year, month, range),
     shiftMonth: (year: number, month: number, delta: number, range: DateRange = {}) =>
         shiftAdMonth(year, month, delta, range),
+    moveToYear: (_year: number, month: number, toYear: number, range: DateRange = {}) =>
+        clampAdMonth(toYear, month, range),
     isMonthInRange: (year: number, month: number, range: DateRange = {}) => isAdMonthInRange(year, month, range),
     midMonth: (year: number, month: number) =>
         tryToBs({ year, month, day: 15 }) ?? (year <= toAd(MIN_DATE).year ? MIN_DATE : MAX_DATE),
@@ -124,6 +142,7 @@ export const GREGORIAN: CalendarDefinition = Object.freeze({
         const weekday = DAY_NAMES[script][day.dayOfWeek];
         return `${weekday}, ${toDigits(date, script)} ${FULL_AD_MONTH_NAMES[script][month - 1]} ${toDigits(year, script)}`;
     },
+    dayMarkers: () => NO_MARKERS,
 });
 
 /**
@@ -143,7 +162,12 @@ export const NEPAL_SAMBAT: CalendarDefinition = Object.freeze({
         if (year === undefined) {
             return NEPAL_SAMBAT_MONTH_NAMES[script];
         }
-        return nepalSambatMonths(year).map((m) => nepalSambatMonthName(m.month, m.isLeapMonth, script));
+        // Name a leap month after the month it repeats, such as `Anala (Tachhala)`.
+        return nepalSambatMonths(year).map((m) =>
+            m.isLeapMonth
+                ? `${nepalSambatMonthName(m.month, true, script)} (${nepalSambatMonthName(m.month, false, script)})`
+                : nepalSambatMonthName(m.month, false, script),
+        );
     },
     monthOf: nsMonthOf,
     clampMonth: nsClampMonth,
@@ -159,6 +183,22 @@ export const NEPAL_SAMBAT: CalendarDefinition = Object.freeze({
             y++;
         }
         return nsClampMonth(y, m, range);
+    },
+    moveToYear(year: number, month: number, toYear: number, range: DateRange = {}): YearMonth {
+        const from = nepalSambatMonths(year)[month - 1];
+        const months = nepalSambatMonths(toYear);
+        if (!from || !months.length) {
+            return nsClampMonth(toYear, month, range);
+        }
+        // The same month, else its ordinary (nija) month, else the nearest end of a partial year.
+        let index = months.findIndex((m) => m.month === from.month && m.isLeapMonth === from.isLeapMonth);
+        if (index < 0) {
+            index = months.findIndex((m) => m.month === from.month && !m.isLeapMonth);
+        }
+        if (index < 0) {
+            index = from.month < months[0]!.month ? 0 : months.length - 1;
+        }
+        return nsClampMonth(toYear, index + 1, range);
     },
     isMonthInRange(year: number, month: number, range: DateRange = {}): boolean {
         if (!nepalSambatMonths(year)[month - 1]) {
@@ -197,6 +237,13 @@ export const NEPAL_SAMBAT: CalendarDefinition = Object.freeze({
     otherDayNumber: (day: MonthViewDay) => day.bs.day,
     dayLabel: (day: MonthViewDay, script: Script = 'roman') =>
         `${DAY_NAMES[script][day.dayOfWeek]}, ${formatNepalSambat(toNepalSambat(day.bs), 'G', script)}`,
+    dayMarkers(day: MonthViewDay): readonly string[] {
+        const { paksha, tithi } = toNepalSambat(day.bs);
+        if (tithi === 15) {
+            return [paksha, paksha === 'thwa' ? 'punhi' : 'amai'];
+        }
+        return [paksha];
+    },
 });
 
 /** Every calendar, by type. */

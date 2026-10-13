@@ -64,7 +64,11 @@ describe('Nepal Sambat calendar', () => {
         expect(months).toHaveLength(13);
         expect(months[7]).toMatchObject({ month: 8, isLeapMonth: true, first: { year: 2083, month: 2, day: 3 } });
         expect(months[8]).toMatchObject({ month: 8, isLeapMonth: false });
-        expect(NEPAL_SAMBAT.monthNames('roman', 1146).slice(6, 9)).toEqual(['Bachhala', 'Anala', 'Tachhala']);
+        expect(NEPAL_SAMBAT.monthNames('roman', 1146).slice(6, 9)).toEqual([
+            'Bachhala',
+            'Anala (Tachhala)',
+            'Tachhala',
+        ]);
         expect(NEPAL_SAMBAT.monthNames('nepali', 1147)).toHaveLength(12);
         expect(calendarMonthNames('ns', 'nepali')[0]).toBe('कछला');
         expect(nepalSambatMonths(1000)).toEqual([]);
@@ -99,6 +103,35 @@ describe('Nepal Sambat calendar', () => {
         // NS 1148 also has a leap month, so 25 months on is the first month of 1149.
         expect(nepalSambatMonths(1148)).toHaveLength(13);
         expect(NEPAL_SAMBAT.shiftMonth(1147, 1, 25)).toEqual({ year: 1149, month: 1 });
+    });
+
+    it('keeps the month by name when moving to another year', () => {
+        // Tachhala is the 8th month of 1147 and the 9th of 1146, after Anala (leap Tachhala).
+        expect(NEPAL_SAMBAT.moveToYear(1147, 8, 1146)).toEqual({ year: 1146, month: 9 });
+        expect(NEPAL_SAMBAT.moveToYear(1146, 9, 1147)).toEqual({ year: 1147, month: 8 });
+        // A leap month falls back to its ordinary month in a year without one.
+        expect(NEPAL_SAMBAT.moveToYear(1146, 8, 1147)).toEqual({ year: 1147, month: 8 });
+        expect(NEPAL_SAMBAT.moveToYear(1147, 12, 1146)).toEqual({ year: 1146, month: 13 });
+        // NS 1033 starts at Chaula and 1154 ends at Bachhala, so a missing month goes to the nearer end.
+        expect(NEPAL_SAMBAT.moveToYear(1147, 1, 1033)).toEqual({ year: 1033, month: 1 });
+        expect(NEPAL_SAMBAT.moveToYear(1147, 12, 1154)).toEqual({ year: 1154, month: 6 });
+        expect(NEPAL_SAMBAT.moveToYear(1147, 1, 1146, { min: { year: 2083, month: 1, day: 1 } })).toEqual(
+            NEPAL_SAMBAT.monthOf({ year: 2083, month: 1, day: 1 }),
+        );
+        expect(BIKRAM_SAMBAT.moveToYear(2082, 12, 2083)).toEqual({ year: 2083, month: 12 });
+    });
+
+    it('marks the paksha, full moon and new moon', () => {
+        const view = NEPAL_SAMBAT.buildView(1147, 1);
+        const days = view.weeks.flat().filter((d) => d !== null);
+        expect(NEPAL_SAMBAT.dayMarkers(days[0]!)).toEqual(['thwa']);
+        const punhi = days.filter((d) => NEPAL_SAMBAT.dayMarkers(d).includes('punhi'));
+        const amai = days.filter((d) => NEPAL_SAMBAT.dayMarkers(d).includes('amai'));
+        expect(punhi).toHaveLength(1);
+        expect(amai).toHaveLength(1);
+        expect(NEPAL_SAMBAT.dayMarkers(amai[0]!)).toEqual(['ga', 'amai']);
+        expect(amai[0]).toBe(days.at(-1));
+        expect(BIKRAM_SAMBAT.dayMarkers(days[0]!)).toEqual([]);
     });
 
     it('keeps to the supported range and to min and max', () => {

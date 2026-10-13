@@ -92,8 +92,11 @@ The toolbar has a dropdown that switches the grid between calendars:
 - `bs`: Bikram Sambat (विक्रम संवत्), the default, with the AD date under each day.
 - `ad`: Gregorian (ईस्वी संवत्), with the BS date under each day.
 - `ns`: Nepal Sambat (नेपाल संवत्), the lunar calendar. Each day shows its tithi, with the BS date under
-  it and the full NS date, such as `ने.सं. ११४७ कछलाथ्व पारू`, in its tooltip. A year with a leap
-  month (Anala) has 13 months in the month picker.
+  it and the full NS date, such as `ने.सं. ११४७ कछलाथ्व पारू`, in its tooltip. A dot marks the full
+  moon (Punhi, filled) and the new moon (Amai, hollow), and each day gets an `osn-cal__day--thwa` or
+  `osn-cal__day--ga` class for its paksha. A year with a leap month has 13 months in the month
+  picker, with the leap month named after the month it repeats, such as `Anala (Tachhala)`. The year
+  picker keeps the same month by name.
 
 The header shows the other calendar's months that the grid spans. The value is always a `BsDate`,
 because two days can share one Nepal Sambat date when a tithi repeats. `onChange` gets the date in

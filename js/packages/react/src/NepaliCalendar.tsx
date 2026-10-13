@@ -178,6 +178,11 @@ export function NepaliCalendar({
         show(year, month);
     };
 
+    const jumpToYear = (year: number) => {
+        setFocused(null);
+        setVisible({ system, ...cal.moveToYear(view.year, view.month, year, range) });
+    };
+
     const goToToday = () => {
         setFocused(null);
         const month = cal.monthOf(today);
@@ -234,7 +239,7 @@ export function NepaliCalendar({
                             className="osn-cal__select osn-cal__select--year"
                             aria-label={nepali ? 'साल' : 'Year'}
                             value={view.year}
-                            onChange={(event) => jumpTo(Number(event.target.value), view.month)}
+                            onChange={(event) => jumpToYear(Number(event.target.value))}
                         >
                             {years.map((year) => (
                                 <option key={year} value={year}>
@@ -284,7 +289,7 @@ export function NepaliCalendar({
                                     <td key={day.key} className="osn-cal__cell">
                                         <button
                                             type="button"
-                                            className={dayClass(day)}
+                                            className={dayClass(day, cal.dayMarkers(day))}
                                             tabIndex={isSameBs(day.bs, tabStop) ? 0 : -1}
                                             aria-label={cal.dayLabel(day, activeScript)}
                                             title={cal.dayLabel(day, activeScript)}
@@ -352,8 +357,9 @@ export function NepaliCalendar({
     );
 }
 
-function dayClass(day: MonthViewDay): string {
+function dayClass(day: MonthViewDay, markers: readonly string[]): string {
     let name = 'osn-cal__day';
+    for (const marker of markers) name += ` osn-cal__day--${marker}`;
     if (day.dayOfWeek === 6) name += ' osn-cal__day--saturday';
     if (day.isToday) name += ' osn-cal__day--today';
     if (day.isSelected) name += ' osn-cal__day--selected';

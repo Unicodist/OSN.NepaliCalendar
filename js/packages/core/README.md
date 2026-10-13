@@ -207,14 +207,16 @@ ns.dayNumber(first); // 1, the tithi
 ns.otherDayNumber(first); // 24, the BS day
 ns.dayLabel(first); // 'Mangalbar, NS 1147 Kachhala Thwa Paru'
 
-ns.monthNames('roman', 1146); // 13 months, with 'Anala' (the leap month) before 'Tachhala'
+ns.monthNames('roman', 1146); // 13 months, with 'Anala (Tachhala)' (the leap month) before 'Tachhala'
 ns.shiftMonth(1146, 13, 1); // { year: 1147, month: 1 }
+ns.moveToYear(1147, 8, 1146); // { year: 1146, month: 9 }: Tachhala again, after 1146's Anala
+ns.dayMarkers(first); // ['thwa']; a full moon gives ['thwa', 'punhi'], a new moon ['ga', 'amai']
 convertMonth(1147, 1, 'ns', 'ad'); // { year: 2026, month: 11 }, the AD month to show after switching
 ```
 
 A month is `{ year, month }`, where `month` counts from 1 at the start of the year. A Nepal Sambat
 year with a leap month has 13, so there `month` is the month's place in its year, not its name.
-Every calendar also has `years(range)`, `clampMonth`, `isMonthInRange` and `midMonth`, and takes the
+Every calendar also has `years(range)`, `clampMonth`, `moveToYear`, `isMonthInRange`, `midMonth` and `dayMarkers`, and takes the
 same `{ min, max }` BS range. `buildCalendarView(type, year, month, options)`, `clampCalendarMonth`,
 `isCalendarMonthInRange`, `calendarYears`, `calendarMonthNames`, `dayLabel` and `monthOf` do the
 same from a type.
