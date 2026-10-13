@@ -1,21 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-    type CellValue,
     FUNCTIONS,
     InputError,
-    RANGE_FUNCTIONS,
     adToSerial,
     bsDateSerial,
     bsDay,
     bsMonth,
+    broadcast,
     bsYear,
     convertCells,
     daysInMonth,
     formatBsText,
     monthName,
     nsYear,
-    overRange,
     readAdDate,
     readBsDate,
     serialToAd,
@@ -70,7 +68,7 @@ describe('reading cells', () => {
     it('rejects BS dates that do not exist', () => {
         expect(() => readBsDate('2082-06-32')).toThrow('2082-6-32 is not a BS date');
         expect(() => readBsDate('2091-01-01')).toThrow(InputError);
-        expect(() => readBsDate('hello')).toThrow('Expected BS text like 2082-06-16.');
+        expect(() => readBsDate('hello')).toThrow('Could not read "hello" as a date.');
     });
 });
 
@@ -144,42 +142,68 @@ describe('functions.json', () => {
     });
 });
 
-describe('ranges', () => {
+describe('broadcast', () => {
     const toError = (error: unknown) => `#VALUE! ${(error as Error).message}`;
+    const run = (id: string) => broadcast(FUNCTIONS[id]!.fn, FUNCTIONS[id]!.values, toError);
 
     it('converts each cell of a range and keeps blanks blank', () => {
-        const tobs = overRange(toBsText as (...a: CellValue[]) => unknown, toError);
-        expect(tobs([[DASHAIN_SERIAL], [''], [null], ['2025-04-14']])).toEqual([
+        expect(run('TOBS')([[DASHAIN_SERIAL], [''], [null], ['2025-04-14']])).toEqual([
             ['2082-06-16'],
             [''],
             [''],
             ['2082-01-01'],
         ]);
-        expect(tobs([[DASHAIN_SERIAL, '2025-04-14']], 'D', 'nepali')).toEqual([['१६ असोज २०८२', '१ बैशाख २०८२']]);
+        expect(run('TOBS')([[DASHAIN_SERIAL, '2025-04-14']], 'D', [['nepali']])).toEqual([
+            ['१६ असोज २०८२', '१ बैशाख २०८२'],
+        ]);
     });
 
     it('puts an error in each cell that fails', () => {
-        const toad = overRange(toAdSerial as (...a: CellValue[]) => unknown, toError);
-        expect(toad([['2082-06-16'], ['2082-06-32']])).toEqual([
+        expect(run('TOAD')([['2082-06-16'], ['2082-06-32']])).toEqual([
             [DASHAIN_SERIAL],
             ['#VALUE! 2082-6-32 is not a BS date between 1970-01-01 and 2090-12-30.'],
         ]);
     });
 
-    it('throws for a single cell, like a plain value', () => {
-        const toad = overRange(toAdSerial as (...a: CellValue[]) => unknown, toError);
-        expect(toad([['2082-06-16']])).toEqual([[DASHAIN_SERIAL]]);
-        expect(() => toad([['']])).toThrow('The date is empty.');
+    it('treats a single cell like a plain value', () => {
+        expect(run('TOAD')([['2082-06-16']])).toEqual([[DASHAIN_SERIAL]]);
+        expect(run('TOAD')('2082-06-16')).toEqual([[DASHAIN_SERIAL]]);
+        expect(run('TOAD')([['']])).toEqual([['']]);
+        expect(() => run('TOAD')([['nope']])).toThrow(InputError);
     });
 
-    it('lists only functions that exist, each with a range first parameter in functions.json', () => {
+    it('matches ranges cell by cell and repeats single values', () => {
+        expect(run('DATE')([[2082], [2081]], [[6], ['Baisakh']], 16)).toEqual([
+            [DASHAIN_SERIAL],
+            [adToSerial({ year: 2024, month: 4, day: 28 })],
+        ]);
+        // A column of dates against a row of formats gives a grid.
+        expect(run('TOBS')([[DASHAIN_SERIAL], ['2025-04-14']], [['d', 'D']])).toEqual([
+            ['2082-06-16', '16 Ashwin 2082'],
+            ['2082-01-01', '1 Baisakh 2082'],
+        ]);
+        expect(run('TOBS')([[DASHAIN_SERIAL], [DASHAIN_SERIAL]], [['d'], ['D'], ['F']])).toEqual([
+            ['2082-06-16'],
+            ['16 Ashwin 2082'],
+            ['#VALUE! The ranges are different sizes.'],
+        ]);
+    });
+
+    it('leaves off blank rows at the end of a whole-column reference', () => {
+        const column = [[DASHAIN_SERIAL], [''], ...Array.from({ length: 1000 }, () => [''])];
+        expect(run('TOBS')(column)).toEqual([['2082-06-16']]);
+    });
+
+    it('takes a range in every parameter of every function in functions.json', () => {
         const metadata = JSON.parse(readFileSync(new URL('../src/functions.json', import.meta.url), 'utf8')) as {
             functions: { id: string; result: { dimensionality?: string }; parameters: { dimensionality?: string }[] }[];
         };
         for (const f of metadata.functions) {
-            const isRange = RANGE_FUNCTIONS.has(f.id as keyof typeof FUNCTIONS);
-            expect([f.id, f.parameters[0]?.dimensionality === 'matrix'], f.id).toEqual([f.id, isRange]);
-            expect([f.id, f.result.dimensionality === 'matrix'], f.id).toEqual([f.id, isRange]);
+            expect([f.id, f.result.dimensionality], f.id).toEqual([f.id, 'matrix']);
+            expect(
+                f.parameters.every((p) => p.dimensionality === 'matrix'),
+                f.id,
+            ).toBe(true);
         }
     });
 });
