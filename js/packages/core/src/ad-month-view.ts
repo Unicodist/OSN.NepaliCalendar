@@ -1,9 +1,6 @@
 import { type AdDate, type BsDate, MAX_DATE, MIN_DATE, compareBs, isSameBs, toAd, toBs } from './calendar.js';
+import { bsSpanLabel } from './month-grid.js';
 import { type DateRange, type MonthViewDay, type MonthViewOptions, isInRange } from './month-view.js';
-import { MONTH_NAMES, type Script, toDigits } from './names.js';
-
-/** Which calendar a month grid follows: Bikram Sambat or Gregorian. */
-export type CalendarSystem = 'bs' | 'ad';
 
 /** A Gregorian month laid out as weeks starting on Sunday, with the BS date of each day. */
 export interface AdMonthView {
@@ -95,70 +92,12 @@ export function supportedAdYears(range: DateRange = {}): number[] {
     return Array.from({ length: Math.max(last - first + 1, 0) }, (_, i) => first + i);
 }
 
-/**
- * The year and month, in `system`, of the month that contains a BS date. Handy for switching a
- * calendar between BS and AD while keeping the same days in view.
- */
-export function monthOf(date: BsDate, system: CalendarSystem): { year: number; month: number } {
-    const { year, month } = system === 'ad' ? toAd(date) : date;
-    return { year, month };
-}
-
-/**
- * Converts a month shown in one system to the month to show in the other. The selected date is
- * kept in view when it is in the month; otherwise the middle of the month decides.
- */
-export function convertMonth(
-    year: number,
-    month: number,
-    from: CalendarSystem,
-    to: CalendarSystem,
-    selected?: BsDate | null,
-): { year: number; month: number } {
-    if (from === to) {
-        return { year, month };
-    }
-    if (selected && isSameMonth(monthOf(selected, from), year, month)) {
-        return monthOf(selected, to);
-    }
-    if (from === 'bs') {
-        return monthOf(clampBsDay({ year, month, day: 15 }), 'ad');
-    }
-    return monthOf(tryToBs({ year, month, day: 15 }) ?? nearestEnd(year), 'bs');
-}
-
-function isSameMonth(a: { year: number; month: number }, year: number, month: number): boolean {
-    return a.year === year && a.month === month;
-}
-
-function clampBsDay(date: BsDate): BsDate {
-    if (compareBs(date, MIN_DATE) < 0) return MIN_DATE;
-    if (compareBs(date, MAX_DATE) > 0) return MAX_DATE;
-    return date;
-}
-
-function nearestEnd(year: number): BsDate {
-    return year <= toAd(MIN_DATE).year ? MIN_DATE : MAX_DATE;
-}
-
 function tryToBs(date: AdDate): BsDate | null {
     try {
         return toBs(date);
     } catch {
         return null;
     }
-}
-
-function bsSpanLabel(first: BsDate, last: BsDate, script: Script): string {
-    const names = MONTH_NAMES[script];
-    const firstMonth = names[first.month - 1]!;
-    const lastMonth = names[last.month - 1]!;
-    const firstYear = toDigits(first.year, script);
-    const lastYear = toDigits(last.year, script);
-    if (first.year !== last.year) {
-        return `${firstMonth} ${firstYear}/${lastMonth} ${lastYear}`;
-    }
-    return first.month === last.month ? `${firstMonth} ${firstYear}` : `${firstMonth}/${lastMonth} ${firstYear}`;
 }
 
 function monthIndex(year: number, month: number): number {

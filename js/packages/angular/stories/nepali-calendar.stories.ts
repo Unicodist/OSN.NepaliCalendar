@@ -2,8 +2,9 @@ import { Component, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
 import { argsToTemplate } from '@analogjs/storybook-angular';
+import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { fn } from 'storybook/test';
-import { type BsDate, NepaliCalendarComponent } from '../src/public-api';
+import { type BsDate, NepaliCalendarComponent, type NepalSambatDate, formatNepalSambat } from '../src/public-api';
 
 const meta: Meta<NepaliCalendarComponent> = {
     title: 'NepaliCalendar',
@@ -22,7 +23,8 @@ const meta: Meta<NepaliCalendarComponent> = {
     },
     argTypes: {
         script: { control: 'inline-radio', options: ['nepali', 'roman'] },
-        calendar: { control: 'inline-radio', options: ['bs', 'ad'] },
+        calendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
+        calendars: { control: 'check', options: ['bs', 'ad', 'ns'] },
     },
 };
 
@@ -37,9 +39,14 @@ export const Roman: Story = {
     args: { script: 'roman' },
 };
 
-/** A Gregorian (AD) month with the BS date under each day. The BS/AD button switches back. */
+/** A Gregorian (AD) month with the BS date under each day. The calendar dropdown switches back. */
 export const AdCalendar: Story = {
     args: { script: 'roman', calendar: 'ad' },
+};
+
+/** Only BS and Nepal Sambat in the calendar dropdown. */
+export const ChosenCalendars: Story = {
+    args: { script: 'roman', calendars: ['bs', 'ns'] },
 };
 
 /** Opens on the month of a bound date. */
@@ -78,7 +85,7 @@ export const Minimal: Story = {
     selector: 'story-two-way',
     imports: [NepaliCalendarComponent],
     template: `
-        <osn-nepali-calendar [(value)]="value" [(script)]="script" />
+        <osn-calendar [(value)]="value" [(script)]="script" />
         <p style="font-family: monospace">
             value: {{ value() ? value()!.year + '-' + value()!.month + '-' + value()!.day : 'none' }} · script:
             {{ script() }}
@@ -103,7 +110,7 @@ export const TwoWayBinding: Story = {
     selector: 'story-form-control',
     imports: [NepaliCalendarComponent, ReactiveFormsModule],
     template: `
-        <osn-nepali-calendar script="roman" [formControl]="control" />
+        <osn-calendar script="roman" [formControl]="control" />
         <p style="font-family: monospace">
             control.value:
             {{ control.value ? control.value.year + '-' + control.value.month + '-' + control.value.day : 'none' }}
@@ -126,6 +133,36 @@ export const FormControlBinding: Story = {
     }),
 };
 
+@Component({
+    selector: 'story-nepal-sambat',
+    imports: [NepaliCalendarComponent],
+    template: `
+        <osn-calendar calendar="ns" script="roman" [(value)]="value" (dateSelect)="ns.set($event.ns)" />
+        <p style="font-family: monospace">
+            value: {{ value() ? value()!.year + '-' + value()!.month + '-' + value()!.day : 'none' }} · NS:
+            {{ format(ns()) }}
+        </p>
+    `,
+})
+class NepalSambatComponent {
+    readonly value = signal<BsDate | null>({ year: 2083, month: 7, day: 24 });
+    readonly ns = signal<NepalSambatDate>(toNepalSambat({ year: 2083, month: 7, day: 24 }));
+    protected readonly format = (date: NepalSambatDate) => formatNepalSambat(date);
+}
+
+/**
+ * A Nepal Sambat lunar month: each day shows its tithi, with the BS date under it and the full NS date in
+ * its tooltip. `value` stays a BS date, since two days can share one NS date; `dateSelect` also emits the
+ * NS date, mirrored below the calendar.
+ */
+export const NepalSambat: Story = {
+    parameters: { controls: { disable: true } },
+    render: () => ({
+        moduleMetadata: { imports: [NepalSambatComponent] },
+        template: '<story-nepal-sambat />',
+    }),
+};
+
 /** Restyled through the CSS custom properties on .osn-cal. */
 export const Themed: Story = {
     args: { script: 'roman' },
@@ -134,6 +171,6 @@ export const Themed: Story = {
         styles: [
             ':host ::ng-deep .osn-cal { --osn-cal-accent: #1f6feb; --osn-cal-holiday: #1f6feb; --osn-cal-radius: 16px; }',
         ],
-        template: `<osn-nepali-calendar ${argsToTemplate(args)} />`,
+        template: `<osn-calendar ${argsToTemplate(args)} />`,
     }),
 };

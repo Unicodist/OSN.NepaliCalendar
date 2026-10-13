@@ -3,26 +3,24 @@ import {
     ABBREVIATED_DAY_NAMES,
     type AdDate,
     type BsDate,
-    type CalendarSystem,
+    CALENDAR_TYPES,
+    CALENDARS,
+    type CalendarType,
     DAY_NAMES,
     type DateRange,
     MAX_DATE,
     MIN_DATE,
     type MonthViewDay,
+    type NepalSambatDate,
     type Script,
     addDays,
-    buildCalendarView,
-    calendarMonthNames,
-    calendarYears,
     clampBs,
-    clampCalendarMonth,
     convertMonth,
-    dayLabel,
-    isCalendarMonthInRange,
+    getCalendar,
     isSameBs,
-    monthOf,
     toAd,
     toDigits,
+    toNepalSambat,
     todayBs,
 } from '@opensourcenepal/nepali-calendar';
 
@@ -31,8 +29,11 @@ export interface NepaliCalendarProps {
     value?: BsDate | null;
     /** The initially selected date when the selection is not controlled. */
     defaultValue?: BsDate | null;
-    /** Called when the user picks a day, with the BS date and its AD equivalent. */
-    onChange?: (date: BsDate, ad: AdDate) => void;
+    /**
+     * Called when the user picks a day, with its BS date, AD date and Nepal Sambat date. The value is
+     * always the BS date, whichever calendar is shown, because two days can share one NS date.
+     */
+    onChange?: (date: BsDate, ad: AdDate, ns: NepalSambatDate) => void;
     /** The script for names and digits. Pass it with `onScriptChange` to control it. */
     script?: Script;
     /** The initial script when it is not controlled. Defaults to `nepali`. */
@@ -41,17 +42,22 @@ export interface NepaliCalendarProps {
     onScriptChange?: (script: Script) => void;
     /** Shows the Nepali/Roman toggle. Defaults to `true`. */
     showScriptToggle?: boolean;
-    /** The calendar the grid follows: `bs` or `ad`. Pass it with `onCalendarChange` to control it. */
-    calendar?: CalendarSystem;
+    /**
+     * The calendar the grid follows: `bs` (Bikram Sambat), `ad` (Gregorian) or `ns` (Nepal Sambat).
+     * Pass it with `onCalendarChange` to control it.
+     */
+    calendar?: CalendarType;
     /** The initial calendar when it is not controlled. Defaults to `bs`. */
-    defaultCalendar?: CalendarSystem;
-    /** Called when the user switches between BS and AD with the toggle. */
-    onCalendarChange?: (calendar: CalendarSystem) => void;
-    /** Shows the BS/AD toggle. Defaults to `true`. */
+    defaultCalendar?: CalendarType;
+    /** Called when the user picks another calendar from the dropdown. */
+    onCalendarChange?: (calendar: CalendarType) => void;
+    /** The calendars the dropdown offers, in order. Defaults to all of them: `['bs', 'ad', 'ns']`. */
+    calendars?: readonly CalendarType[];
+    /** Shows the calendar dropdown. Defaults to `true`; it is hidden when `calendars` has only one. */
     showCalendarToggle?: boolean;
     /**
-     * Shows the other calendar's date under each day (AD under BS days, or BS under AD days) and
-     * its months in the header. Defaults to `true`.
+     * Shows the other calendar's date under each day (AD under BS days, BS under AD and Nepal Sambat
+     * days) and its months in the header. Defaults to `true`.
      */
     showAdDates?: boolean;
     /** Shows the button that jumps to today. Defaults to `true`. */
@@ -71,8 +77,8 @@ export interface NepaliCalendarProps {
 const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
 
 /**
- * A month-view Nepali (BS) calendar that shows AD dates alongside and lets the user pick a day.
- * It can also be switched to an AD (Gregorian) month grid with BS dates alongside.
+ * A month-view calendar that lets the user pick a day. It shows a Bikram Sambat month with AD dates
+ * alongside by default, and can switch to a Gregorian (AD) or Nepal Sambat (lunar) month grid.
  */
 export function NepaliCalendar({
     value,
@@ -85,6 +91,7 @@ export function NepaliCalendar({
     calendar,
     defaultCalendar = 'bs',
     onCalendarChange,
+    calendars = CALENDAR_TYPES,
     showCalendarToggle = true,
     showAdDates = true,
     showTodayButton = true,
@@ -99,20 +106,23 @@ export function NepaliCalendar({
     const selected = value !== undefined ? value : uncontrolledValue;
     const [uncontrolledScript, setUncontrolledScript] = useState<Script>(defaultScript);
     const activeScript = script ?? uncontrolledScript;
-    const [uncontrolledCalendar, setUncontrolledCalendar] = useState<CalendarSystem>(defaultCalendar);
+    const [uncontrolledCalendar, setUncontrolledCalendar] = useState<CalendarType>(defaultCalendar);
     const system = calendar ?? uncontrolledCalendar;
+    const cal = getCalendar(system);
 
-    const [visible, setVisible] = useState<{ system: CalendarSystem; year: number; month: number }>(() => {
-        const start = initialMonth ?? selected ?? today;
-        return { system: 'bs', year: start.year, month: start.month };
+    const [visible, setVisible] = useState<{ system: CalendarType; year: number; month: number }>(() => {
+        if (initialMonth) {
+            return { system: 'bs', year: initialMonth.year, month: initialMonth.month };
+        }
+        return { system, ...getCalendar(system).monthOf(selected ?? today) };
     });
     const [focused, setFocused] = useState<BsDate | null>(null);
     const range: DateRange = useMemo(() => ({ min, max }), [min, max]);
-    const years = useMemo(() => calendarYears(system, range), [system, range]);
+    const years = useMemo(() => cal.years(range), [cal, range]);
     // Convert and clamp at render time, so switching calendars or changing min or max keeps the
     // shown month in view and in range.
     const converted = convertMonth(visible.year, visible.month, visible.system, system, selected);
-    const shown = clampCalendarMonth(system, converted.year, converted.month, range);
+    const shown = cal.clampMonth(converted.year, converted.month, range);
     const gridRef = useRef<HTMLTableElement>(null);
 
     // Keep keyboard focus on the focused day after the month changes under it.
@@ -123,8 +133,8 @@ export function NepaliCalendar({
     }, [focused]);
 
     const view = useMemo(
-        () => buildCalendarView(system, shown.year, shown.month, { today, selected, script: activeScript, ...range }),
-        [system, shown.year, shown.month, today, selected, activeScript, range],
+        () => cal.buildView(shown.year, shown.month, { today, selected, script: activeScript, ...range }),
+        [cal, shown.year, shown.month, today, selected, activeScript, range],
     );
 
     // The one day reachable with Tab: the focused day, else the selection, today or the first enabled day.
@@ -134,7 +144,7 @@ export function NepaliCalendar({
         if (value === undefined) {
             setUncontrolledValue(day);
         }
-        onChange?.(day, toAd(day));
+        onChange?.(day, toAd(day), toNepalSambat(day));
     };
 
     const toggleScript = () => {
@@ -145,8 +155,7 @@ export function NepaliCalendar({
         onScriptChange?.(next);
     };
 
-    const toggleCalendar = () => {
-        const next: CalendarSystem = system === 'bs' ? 'ad' : 'bs';
+    const changeCalendar = (next: CalendarType) => {
         setFocused(null);
         setVisible({ system, ...shown });
         if (calendar === undefined) {
@@ -156,12 +165,12 @@ export function NepaliCalendar({
     };
 
     const show = (year: number, month: number) => {
-        setVisible({ system, ...clampCalendarMonth(system, year, month, range) });
+        setVisible({ system, ...cal.clampMonth(year, month, range) });
     };
 
     const moveMonth = (delta: number) => {
         setFocused(null);
-        show(shown.year, shown.month + delta);
+        setVisible({ system, ...cal.shiftMonth(shown.year, shown.month, delta, range) });
     };
 
     const jumpTo = (year: number, month: number) => {
@@ -169,9 +178,14 @@ export function NepaliCalendar({
         show(year, month);
     };
 
+    const jumpToYear = (year: number) => {
+        setFocused(null);
+        setVisible({ system, ...cal.moveToYear(view.year, view.month, year, range) });
+    };
+
     const goToToday = () => {
         setFocused(null);
-        const month = monthOf(today, system);
+        const month = cal.monthOf(today);
         show(month.year, month.month);
     };
 
@@ -183,15 +197,17 @@ export function NepaliCalendar({
         event.preventDefault();
         const target = clampBs(clamp(day, step), range);
         setFocused(target);
-        const month = monthOf(target, system);
+        const month = cal.monthOf(target);
         if (month.year !== shown.year || month.month !== shown.month) {
             setVisible({ system, ...month });
         }
     };
 
     const nepali = activeScript === 'nepali';
-    const monthNames = calendarMonthNames(system, activeScript);
+    const monthNames = cal.monthNames(activeScript, view.year);
     const title = `${monthNames[view.month - 1]} ${toDigits(view.year, activeScript)}`;
+    const calendarOptions = calendars.includes(system) ? calendars : [system, ...calendars];
+    const showCalendarPicker = showCalendarToggle && calendarOptions.length > 1;
 
     return (
         <div className={['osn-cal', className].filter(Boolean).join(' ')} lang={nepali ? 'ne' : 'en'}>
@@ -214,11 +230,7 @@ export function NepaliCalendar({
                             onChange={(event) => jumpTo(view.year, Number(event.target.value))}
                         >
                             {monthNames.map((name, i) => (
-                                <option
-                                    key={i}
-                                    value={i + 1}
-                                    disabled={!isCalendarMonthInRange(system, view.year, i + 1, range)}
-                                >
+                                <option key={i} value={i + 1} disabled={!cal.isMonthInRange(view.year, i + 1, range)}>
                                     {name}
                                 </option>
                             ))}
@@ -227,7 +239,7 @@ export function NepaliCalendar({
                             className="osn-cal__select osn-cal__select--year"
                             aria-label={nepali ? 'साल' : 'Year'}
                             value={view.year}
-                            onChange={(event) => jumpTo(Number(event.target.value), view.month)}
+                            onChange={(event) => jumpToYear(Number(event.target.value))}
                         >
                             {years.map((year) => (
                                 <option key={year} value={year}>
@@ -277,9 +289,10 @@ export function NepaliCalendar({
                                     <td key={day.key} className="osn-cal__cell">
                                         <button
                                             type="button"
-                                            className={dayClass(day)}
+                                            className={dayClass(day, cal.dayMarkers(day))}
                                             tabIndex={isSameBs(day.bs, tabStop) ? 0 : -1}
-                                            aria-label={dayLabel(day, system, activeScript)}
+                                            aria-label={cal.dayLabel(day, activeScript)}
+                                            title={cal.dayLabel(day, activeScript)}
                                             aria-current={day.isToday ? 'date' : undefined}
                                             aria-pressed={day.isSelected}
                                             data-date={day.key}
@@ -288,11 +301,11 @@ export function NepaliCalendar({
                                             onKeyDown={(event) => onDayKeyDown(event, day.bs)}
                                         >
                                             <span className="osn-cal__day-bs">
-                                                {toDigits(system === 'ad' ? day.ad.day : day.bs.day, activeScript)}
+                                                {toDigits(cal.dayNumber(day), activeScript)}
                                             </span>
                                             {showAdDates && (
                                                 <span className="osn-cal__day-ad">
-                                                    {toDigits(system === 'ad' ? day.bs.day : day.ad.day, activeScript)}
+                                                    {toDigits(cal.otherDayNumber(day), activeScript)}
                                                 </span>
                                             )}
                                         </button>
@@ -303,7 +316,7 @@ export function NepaliCalendar({
                     ))}
                 </tbody>
             </table>
-            {(showTodayButton || showScriptToggle || showCalendarToggle) && (
+            {(showTodayButton || showScriptToggle || showCalendarPicker) && (
                 <div className="osn-cal__toolbar">
                     {showTodayButton ? (
                         <button type="button" className="osn-cal__today" onClick={goToToday}>
@@ -313,15 +326,19 @@ export function NepaliCalendar({
                         <span />
                     )}
                     <span className="osn-cal__toggles">
-                        {showCalendarToggle && (
-                            <button
-                                type="button"
-                                className="osn-cal__system"
-                                aria-label={calendarToggleLabel(system, nepali)}
-                                onClick={toggleCalendar}
+                        {showCalendarPicker && (
+                            <select
+                                className="osn-cal__calendar"
+                                aria-label={nepali ? 'पात्रो' : 'Calendar'}
+                                value={system}
+                                onChange={(event) => changeCalendar(event.target.value as CalendarType)}
                             >
-                                {calendarToggleText(system, nepali)}
-                            </button>
+                                {calendarOptions.map((type) => (
+                                    <option key={type} value={type}>
+                                        {CALENDARS[type].name[activeScript]}
+                                    </option>
+                                ))}
+                            </select>
                         )}
                         {showScriptToggle && (
                             <button
@@ -340,18 +357,9 @@ export function NepaliCalendar({
     );
 }
 
-function calendarToggleText(system: CalendarSystem, nepali: boolean): string {
-    if (system === 'bs') return nepali ? 'ई.सं.' : 'AD';
-    return nepali ? 'वि.सं.' : 'BS';
-}
-
-function calendarToggleLabel(system: CalendarSystem, nepali: boolean): string {
-    if (system === 'bs') return nepali ? 'ईस्वी संवत्‌मा देखाउनुहोस्' : 'Show AD calendar';
-    return nepali ? 'विक्रम संवत्‌मा देखाउनुहोस्' : 'Show BS calendar';
-}
-
-function dayClass(day: MonthViewDay): string {
+function dayClass(day: MonthViewDay, markers: readonly string[]): string {
     let name = 'osn-cal__day';
+    for (const marker of markers) name += ` osn-cal__day--${marker}`;
     if (day.dayOfWeek === 6) name += ' osn-cal__day--saturday';
     if (day.isToday) name += ' osn-cal__day--today';
     if (day.isSelected) name += ' osn-cal__day--selected';

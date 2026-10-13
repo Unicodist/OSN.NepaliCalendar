@@ -6,10 +6,10 @@ npm workspaces with the JavaScript side of OSN.NepaliCalendar:
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`@opensourcenepal/nepali-calendar`](packages/core)            | Framework-free TypeScript core: AD/BS conversion, validation, Roman and Devanagari names and formatting, and the month grid the components draw. |
 | [`@opensourcenepal/nepali-calendar-react`](packages/react)     | `<NepaliCalendar>` for React 18+.                                                                                                                |
-| [`@opensourcenepal/nepali-calendar-angular`](packages/angular) | `<osn-nepali-calendar>` for Angular 22, usable with `[(value)]` or as a form control.                                                            |
+| [`@opensourcenepal/nepali-calendar-angular`](packages/angular) | `<osn-calendar>` for Angular 22, usable with `[(value)]` or as a form control.                                                                   |
 
 Both components show a BS month with each AD day under its BS day and the AD months in the
-header (or, switched to AD, an AD month with each BS day under it), switch between Nepali and Roman script, jump to any month and year from the header
+header (or, switched with the calendar dropdown, an AD or Nepal Sambat month with each BS day under it), switch between Nepali and Roman script, jump to any month and year from the header
 dropdowns, step between months (and with the arrow keys between days), jump back to today, and let the user pick a day. They cover the same range as the
 .NET library, BS 1970 to BS 2090, from the same month-length table: a test fails if
 `packages/core/src/month-lengths.ts` and `src/OSN.NepaliCalendar/BsCalendarData.cs` drift apart.
@@ -42,7 +42,7 @@ function Example() {
 }
 ```
 
-Props: `value`/`defaultValue`/`onChange(bs, ad)`, `script`/`defaultScript`/`onScriptChange`,
+Props: `value`/`defaultValue`/`onChange(bs, ad, ns)`, `script`/`defaultScript`/`onScriptChange`,
 `calendar`/`defaultCalendar`/`onCalendarChange`, `showScriptToggle`, `showCalendarToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `min`, `max`, `today`, `className`.
 
@@ -62,7 +62,7 @@ export class Example {
 
 Add the stylesheet to `angular.json` (`"styles": ["@opensourcenepal/nepali-calendar-angular/styles.css"]`). The
 component also works with `ngModel` and `formControl`. Inputs and outputs: `[(value)]`,
-`[(script)]`, `[(calendar)]`, `(dateSelect)` with `{ bs, ad }`, `showScriptToggle`, `showCalendarToggle`, `showAdDates`,
+`[(script)]`, `[(calendar)]`, `(dateSelect)` with `{ bs, ad, ns }`, `showScriptToggle`, `showCalendarToggle`, `showAdDates`,
 `showTodayButton`, `initialMonth`, `min`, `max` (with `minDate`/`maxDate` form errors), `today`.
 
 ## Theming
