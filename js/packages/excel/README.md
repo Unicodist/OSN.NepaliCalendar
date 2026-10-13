@@ -9,18 +9,20 @@ date in the selected cell, and a short reference of the functions.
 
 ## Functions
 
-| Function                                    | Returns                                                    | Example                                              |
-| ------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
-| `=NEPALI.TOBS(date, [format], [script])`    | The BS date of an AD date, as text.                        | `=NEPALI.TOBS(A1)` → `2082-06-16`                    |
-| `=NEPALI.TOAD(bs_date)`                     | The AD date of a BS date, as an Excel date.                | `=NEPALI.TOAD("2082-06-16")` → 2 Oct 2025            |
-| `=NEPALI.DATE(year, month, day)`            | The AD date of a BS year, month and day, as an Excel date. | `=NEPALI.DATE(2082, 6, 16)` → 2 Oct 2025             |
-| `=NEPALI.YEAR(date)`                        | The BS year of an AD date.                                 | `2082`                                               |
-| `=NEPALI.MONTH(date)`                       | The BS month of an AD date, 1 (Baisakh) to 12 (Chaitra).   | `6`                                                  |
-| `=NEPALI.DAY(date)`                         | The day of the BS month of an AD date.                     | `16`                                                 |
-| `=NEPALI.FORMAT(bs_date, format, [script])` | A BS date in another format.                               | `=NEPALI.FORMAT(B1, "D", "nepali")` → `१६ असोज २०८२` |
-| `=NEPALI.TODAY([format], [script])`         | Today's BS date, as text. Recalculates like `TODAY()`.     | `2083-06-27`                                         |
-| `=NEPALI.DAYSINMONTH(year, month)`          | The number of days in a BS month.                          | `=NEPALI.DAYSINMONTH(2081, 2)` → `32`                |
-| `=NEPALI.MONTHNAME(month, [script])`        | The name of a BS month.                                    | `=NEPALI.MONTHNAME(6, "nepali")` → `असोज`            |
+| Function                                    | Returns                                                           | Example                                              |
+| ------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| `=NEPALI.TOBS(date, [format], [script])`    | The BS date of an AD date, as text.                               | `=NEPALI.TOBS(A1)` → `2082-06-16`                    |
+| `=NEPALI.TOAD(bs_date)`                     | The AD date of a BS date, as an Excel date.                       | `=NEPALI.TOAD("2082-06-16")` → 2 Oct 2025            |
+| `=NEPALI.DATE(year, month, day)`            | The AD date of a BS year, month and day, as an Excel date.        | `=NEPALI.DATE(2082, 6, 16)` → 2 Oct 2025             |
+| `=NEPALI.YEAR(date)`                        | The BS year of an AD date.                                        | `2082`                                               |
+| `=NEPALI.MONTH(date)`                       | The BS month of an AD date, 1 (Baisakh) to 12 (Chaitra).          | `6`                                                  |
+| `=NEPALI.DAY(date)`                         | The day of the BS month of an AD date.                            | `16`                                                 |
+| `=NEPALI.FORMAT(bs_date, format, [script])` | A BS date in another format.                                      | `=NEPALI.FORMAT(B1, "D", "nepali")` → `१६ असोज २०८२` |
+| `=NEPALI.TODAY([format], [script])`         | Today's BS date, as text. Recalculates like `TODAY()`.            | `2083-06-27`                                         |
+| `=NEPALI.TONS(date, [format], [script])`    | The Nepal Sambat (नेपाल संवत्) lunar date of an AD date, as text. | `=NEPALI.TONS(A1)` → `NS 1145 Kaula Thwa Dashami`    |
+| `=NEPALI.NSYEAR(date)`                      | The Nepal Sambat year of an AD date.                              | `1145`                                               |
+| `=NEPALI.DAYSINMONTH(year, month)`          | The number of days in a BS month.                                 | `=NEPALI.DAYSINMONTH(2081, 2)` → `32`                |
+| `=NEPALI.MONTHNAME(month, [script])`        | The name of a BS month.                                           | `=NEPALI.MONTHNAME(6, "nepali")` → `असोज`            |
 
 - **AD dates** (`date`) are Excel dates, or text like `2025-10-02`. The time of day is ignored.
 - **BS dates** (`bs_date`) are text like `2082-06-16`, `2082/6/16` or `२०८२-०६-१६`. When you type
@@ -31,6 +33,9 @@ date in the selected cell, and a short reference of the functions.
   (`2082-06-16`, the default), `D` (`16 Ashwin 2082`), `F` (`Bihibar, 16 Ashwin 2082`), `M`
   (`16 Ashwin`), `Y` (`Ashwin 2082`), or a custom format with `yyyy`, `yy`, `MMMM`, `MM`, `M`,
   `dddd`, `ddd`, `dd` and `d`.
+- **Nepal Sambat formats** are `G` (`NS 1145 Kaula Thwa Dashami`, the default), `M` (`Kaula Thwa
+Dashami`) and `Y` (`NS 1145`), the same as `NepalSambatDate.ToString` in .NET. Each day takes the
+  tithi at sunrise in Kathmandu, and a leap month is written Anala.
 - **Script** is `"roman"` (the default) or `"nepali"` for Devanagari names and digits.
 - `TOAD` and `DATE` return Excel dates, which show as numbers (`45932`) until the cell is formatted
   as a date.

@@ -82,6 +82,16 @@ public readonly struct NepaliDate : IEquatable<NepaliDate>, IComparable<NepaliDa
     public DayOfWeek DayOfWeek => ToDateTime().DayOfWeek;
 
     /// <summary>
+    /// Gets the Nepal Sambat year of this day: <c>Year - 937</c> before the Nepal Sambat new year
+    /// (Kachhala Thwa Paru, around Mha Puja in Kartik) and <c>Year - 936</c> from it.
+    /// </summary>
+    public int NepalSambatYear => NepalSambatCalendar.Year(BsCalendarData.ToDayNumber(Year, Month, Day));
+
+    /// <summary>Returns the Nepal Sambat (lunar) date of this day.</summary>
+    /// <returns>The <see cref="NepalSambatDate"/> on the same day.</returns>
+    public NepalSambatDate ToNepalSambatDate() => NepalSambatDate.FromNepaliDate(this);
+
+    /// <summary>
     /// Returns the number of days in a month of a BS year.
     /// </summary>
     /// <param name="year">The BS year, from 1970 to 2090.</param>

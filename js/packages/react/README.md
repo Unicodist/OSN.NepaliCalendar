@@ -2,9 +2,9 @@
 
 A Nepali (Bikram Sambat) calendar and date picker for React. It shows a BS month with the AD date
 under each day, and switches between Nepali (`असोज २०८२`) and Roman (`Ashwin 2082`) script.
-A button switches the grid to AD months, with the BS date under each day.
+A dropdown switches the grid to AD (Gregorian) or Nepal Sambat (lunar) months.
 
-- BS or AD month grids, switchable by the user or from your code
+- BS, AD or Nepal Sambat month grids, picked from a dropdown or from your code
 - Month and year dropdowns covering BS 1970 to 2090, plus previous and next buttons
 - Today highlighted, a "Today" button, and arrow-key navigation between days
 - Controlled or uncontrolled, for both the date and the script
@@ -35,7 +35,7 @@ export function App() {
 ```
 
 This shows today's month in Nepali script. Clicking a day calls `onChange` with the BS date
-(`{ year, month, day }`) and its AD equivalent.
+(`{ year, month, day }`), its AD equivalent and its Nepal Sambat date.
 
 ## Examples
 
@@ -85,23 +85,35 @@ import { todayBs } from '@opensourcenepal/nepali-calendar';
 <NepaliCalendar max={todayBs()} />;
 ```
 
-### Switch between BS and AD
+### Switch calendars: BS, AD and Nepal Sambat
 
-The toolbar has a button that switches the grid between BS months and AD (Gregorian) months.
-In AD, each day shows its AD date with the BS date under it, and the header shows the BS months
-it spans. The value is still a `BsDate`, and `onChange` still gets both dates.
+The toolbar has a dropdown that switches the grid between calendars:
+
+- `bs`: Bikram Sambat (विक्रम संवत्), the default, with the AD date under each day.
+- `ad`: Gregorian (ईस्वी संवत्), with the BS date under each day.
+- `ns`: Nepal Sambat (नेपाल संवत्), the lunar calendar. Each day shows its tithi, with the BS date under
+  it and the full NS date, such as `ने.सं. ११४७ कछलाथ्व पारू`, in its tooltip. A dot marks the full
+  moon (Punhi, filled) and the new moon (Amai, hollow), and each day gets an `osn-cal__day--thwa` or
+  `osn-cal__day--ga` class for its paksha. A year with a leap month has 13 months in the month
+  picker, with the leap month named after the month it repeats, such as `Anala (Tachhala)`. The year
+  picker keeps the same month by name.
+
+The header shows the other calendar's months that the grid spans. The value is always a `BsDate`,
+because two days can share one Nepal Sambat date when a tithi repeats. `onChange` gets the date in
+every calendar: `(bs, ad, ns)`, where `ns` is a `NepalSambatDate` you can show with `formatNepalSambat(ns)`.
 
 ```tsx
-<NepaliCalendar defaultCalendar="ad" />
+<NepaliCalendar defaultCalendar="ns" />
 ```
 
-Control it yourself with `calendar` and `onCalendarChange`, or hide the button with
-`showCalendarToggle={false}` to always show one calendar:
+Pick which calendars the dropdown offers with `calendars`, control the calendar yourself with
+`calendar` and `onCalendarChange`, or hide the dropdown with `showCalendarToggle={false}` to always
+show one calendar. The dropdown also hides when `calendars` has only one:
 
 ```tsx
-const [calendar, setCalendar] = useState<CalendarSystem>('bs');
+const [calendar, setCalendar] = useState<CalendarType>('bs');
 
-<NepaliCalendar calendar={calendar} onCalendarChange={setCalendar} />;
+<NepaliCalendar calendars={['bs', 'ns']} calendar={calendar} onCalendarChange={setCalendar} />;
 ```
 
 ### Control the script yourself
@@ -132,26 +144,27 @@ form:
 
 ## Props
 
-| Prop                 | Type                               | Default                             | Description                                                                   |
-| -------------------- | ---------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
-| `value`              | `BsDate \| null`                   |                                     | The selected date. Pass it with `onChange` to control the selection.          |
-| `defaultValue`       | `BsDate \| null`                   | `null`                              | The initial selection when it is not controlled.                              |
-| `onChange`           | `(bs: BsDate, ad: AdDate) => void` |                                     | Called when the user picks a day.                                             |
-| `script`             | `'nepali' \| 'roman'`              |                                     | The script for names and digits. Pass it with `onScriptChange` to control it. |
-| `defaultScript`      | `'nepali' \| 'roman'`              | `'nepali'`                          | The initial script when it is not controlled.                                 |
-| `onScriptChange`     | `(script) => void`                 |                                     | Called when the user switches script.                                         |
-| `showScriptToggle`   | `boolean`                          | `true`                              | Shows the Nepali/Roman toggle button.                                         |
-| `calendar`           | `'bs' \| 'ad'`                     |                                     | The calendar the grid follows. Pass it with `onCalendarChange` to control it. |
-| `defaultCalendar`    | `'bs' \| 'ad'`                     | `'bs'`                              | The initial calendar when it is not controlled.                               |
-| `onCalendarChange`   | `(calendar) => void`               |                                     | Called when the user switches between BS and AD.                              |
-| `showCalendarToggle` | `boolean`                          | `true`                              | Shows the BS/AD toggle button.                                                |
-| `showAdDates`        | `boolean`                          | `true`                              | Shows the other calendar's day under each day, and its months in the header.  |
-| `showTodayButton`    | `boolean`                          | `true`                              | Shows the button that jumps back to today's month.                            |
-| `initialMonth`       | `{ year, month }`                  | the selection's month, else today's | The BS month shown first.                                                     |
-| `min`                | `BsDate \| null`                   |                                     | The earliest date that can be picked.                                         |
-| `max`                | `BsDate \| null`                   |                                     | The latest date that can be picked.                                           |
-| `today`              | `BsDate`                           | today, local time                   | Overrides today's date, for tests and server rendering.                       |
-| `className`          | `string`                           |                                     | Extra classes on the root element.                                            |
+| Prop                 | Type                                                    | Default                             | Description                                                                   |
+| -------------------- | ------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
+| `value`              | `BsDate \| null`                                        |                                     | The selected date. Pass it with `onChange` to control the selection.          |
+| `defaultValue`       | `BsDate \| null`                                        | `null`                              | The initial selection when it is not controlled.                              |
+| `onChange`           | `(bs: BsDate, ad: AdDate, ns: NepalSambatDate) => void` |                                     | Called when the user picks a day, with its BS, AD and Nepal Sambat dates.     |
+| `script`             | `'nepali' \| 'roman'`                                   |                                     | The script for names and digits. Pass it with `onScriptChange` to control it. |
+| `defaultScript`      | `'nepali' \| 'roman'`                                   | `'nepali'`                          | The initial script when it is not controlled.                                 |
+| `onScriptChange`     | `(script) => void`                                      |                                     | Called when the user switches script.                                         |
+| `showScriptToggle`   | `boolean`                                               | `true`                              | Shows the Nepali/Roman toggle button.                                         |
+| `calendar`           | `'bs' \| 'ad' \| 'ns'`                                  |                                     | The calendar the grid follows. Pass it with `onCalendarChange` to control it. |
+| `defaultCalendar`    | `'bs' \| 'ad' \| 'ns'`                                  | `'bs'`                              | The initial calendar when it is not controlled.                               |
+| `onCalendarChange`   | `(calendar) => void`                                    |                                     | Called when the user picks another calendar.                                  |
+| `calendars`          | `CalendarType[]`                                        | `['bs', 'ad', 'ns']`                | The calendars the dropdown offers, in order.                                  |
+| `showCalendarToggle` | `boolean`                                               | `true`                              | Shows the calendar dropdown.                                                  |
+| `showAdDates`        | `boolean`                                               | `true`                              | Shows the other calendar's day under each day, and its months in the header.  |
+| `showTodayButton`    | `boolean`                                               | `true`                              | Shows the button that jumps back to today's month.                            |
+| `initialMonth`       | `{ year, month }`                                       | the selection's month, else today's | The BS month shown first.                                                     |
+| `min`                | `BsDate \| null`                                        |                                     | The earliest date that can be picked.                                         |
+| `max`                | `BsDate \| null`                                        |                                     | The latest date that can be picked.                                           |
+| `today`              | `BsDate`                                                | today, local time                   | Overrides today's date, for tests and server rendering.                       |
+| `className`          | `string`                                                |                                     | Extra classes on the root element.                                            |
 
 `BsDate` and `AdDate` are `{ year, month, day }` with months from 1 to 12.
 

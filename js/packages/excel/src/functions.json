@@ -4,9 +4,15 @@
       "id": "TOBS",
       "name": "TOBS",
       "description": "Converts an AD date to a Nepali (BS) date, as text.",
-      "result": { "type": "string" },
+      "result": {
+        "type": "string"
+      },
       "parameters": [
-        { "name": "date", "description": "An Excel date, or AD text like 2025-10-02.", "type": "any" },
+        {
+          "name": "date",
+          "description": "An Excel date, or AD text like 2025-10-02.",
+          "type": "any"
+        },
         {
           "name": "format",
           "description": "Optional. A format like \"yyyy-MM-dd\" (default), \"D\" for 16 Ashwin 2082 or \"dddd, d MMMM yyyy\".",
@@ -25,48 +31,100 @@
       "id": "TOAD",
       "name": "TOAD",
       "description": "Converts a Nepali (BS) date to an AD date. Format the cell as a date.",
-      "result": { "type": "number" },
-      "parameters": [{ "name": "bs_date", "description": "BS text like 2082-06-16.", "type": "any" }]
+      "result": {
+        "type": "number"
+      },
+      "parameters": [
+        {
+          "name": "bs_date",
+          "description": "BS text like 2082-06-16.",
+          "type": "any"
+        }
+      ]
     },
     {
       "id": "DATE",
       "name": "DATE",
       "description": "Returns the AD date of a Nepali (BS) year, month and day. Format the cell as a date.",
-      "result": { "type": "number" },
+      "result": {
+        "type": "number"
+      },
       "parameters": [
-        { "name": "year", "description": "The BS year, 1970 to 2090.", "type": "number" },
-        { "name": "month", "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).", "type": "number" },
-        { "name": "day", "description": "The day of the BS month.", "type": "number" }
+        {
+          "name": "year",
+          "description": "The BS year, 1970 to 2090.",
+          "type": "number"
+        },
+        {
+          "name": "month",
+          "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).",
+          "type": "number"
+        },
+        {
+          "name": "day",
+          "description": "The day of the BS month.",
+          "type": "number"
+        }
       ]
     },
     {
       "id": "YEAR",
       "name": "YEAR",
       "description": "Returns the Nepali (BS) year of an AD date.",
-      "result": { "type": "number" },
-      "parameters": [{ "name": "date", "description": "An Excel date, or AD text like 2025-10-02.", "type": "any" }]
+      "result": {
+        "type": "number"
+      },
+      "parameters": [
+        {
+          "name": "date",
+          "description": "An Excel date, or AD text like 2025-10-02.",
+          "type": "any"
+        }
+      ]
     },
     {
       "id": "MONTH",
       "name": "MONTH",
       "description": "Returns the Nepali (BS) month of an AD date, 1 (Baisakh) to 12 (Chaitra).",
-      "result": { "type": "number" },
-      "parameters": [{ "name": "date", "description": "An Excel date, or AD text like 2025-10-02.", "type": "any" }]
+      "result": {
+        "type": "number"
+      },
+      "parameters": [
+        {
+          "name": "date",
+          "description": "An Excel date, or AD text like 2025-10-02.",
+          "type": "any"
+        }
+      ]
     },
     {
       "id": "DAY",
       "name": "DAY",
       "description": "Returns the day of the Nepali (BS) month of an AD date.",
-      "result": { "type": "number" },
-      "parameters": [{ "name": "date", "description": "An Excel date, or AD text like 2025-10-02.", "type": "any" }]
+      "result": {
+        "type": "number"
+      },
+      "parameters": [
+        {
+          "name": "date",
+          "description": "An Excel date, or AD text like 2025-10-02.",
+          "type": "any"
+        }
+      ]
     },
     {
       "id": "FORMAT",
       "name": "FORMAT",
       "description": "Formats a Nepali (BS) date, for example in Devanagari or with the month name.",
-      "result": { "type": "string" },
+      "result": {
+        "type": "string"
+      },
       "parameters": [
-        { "name": "bs_date", "description": "BS text like 2082-06-16.", "type": "any" },
+        {
+          "name": "bs_date",
+          "description": "BS text like 2082-06-16.",
+          "type": "any"
+        },
         {
           "name": "format",
           "description": "A format like \"D\" for 16 Ashwin 2082, or \"d MMMM yyyy\".",
@@ -84,8 +142,12 @@
       "id": "TODAY",
       "name": "TODAY",
       "description": "Returns today's Nepali (BS) date, as text.",
-      "result": { "type": "string" },
-      "options": { "volatile": true },
+      "result": {
+        "type": "string"
+      },
+      "options": {
+        "volatile": true
+      },
       "parameters": [
         {
           "name": "format",
@@ -105,24 +167,82 @@
       "id": "DAYSINMONTH",
       "name": "DAYSINMONTH",
       "description": "Returns the number of days in a Nepali (BS) month.",
-      "result": { "type": "number" },
+      "result": {
+        "type": "number"
+      },
       "parameters": [
-        { "name": "year", "description": "The BS year, 1970 to 2090.", "type": "number" },
-        { "name": "month", "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).", "type": "number" }
+        {
+          "name": "year",
+          "description": "The BS year, 1970 to 2090.",
+          "type": "number"
+        },
+        {
+          "name": "month",
+          "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).",
+          "type": "number"
+        }
       ]
     },
     {
       "id": "MONTHNAME",
       "name": "MONTHNAME",
       "description": "Returns the name of a Nepali (BS) month.",
-      "result": { "type": "string" },
+      "result": {
+        "type": "string"
+      },
       "parameters": [
-        { "name": "month", "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).", "type": "number" },
+        {
+          "name": "month",
+          "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).",
+          "type": "number"
+        },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
           "type": "string",
           "optional": true
+        }
+      ]
+    },
+    {
+      "id": "TONS",
+      "name": "TONS",
+      "description": "Converts an AD date to a Nepal Sambat (नेपाल संवत्) lunar date, as text.",
+      "result": {
+        "type": "string"
+      },
+      "parameters": [
+        {
+          "name": "date",
+          "description": "An Excel date, or AD text like 2025-10-02.",
+          "type": "any"
+        },
+        {
+          "name": "format",
+          "description": "Optional. \"G\" for NS 1145 Kaula Thwa Dashami (default), \"M\" without the year, or \"Y\" for the year only.",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "script",
+          "description": "Optional. \"roman\" (default) or \"nepali\".",
+          "type": "string",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "NSYEAR",
+      "name": "NSYEAR",
+      "description": "Returns the Nepal Sambat year of an AD date.",
+      "result": {
+        "type": "number"
+      },
+      "parameters": [
+        {
+          "name": "date",
+          "description": "An Excel date, or AD text like 2025-10-02.",
+          "type": "any"
         }
       ]
     }

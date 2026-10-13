@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type BsDate, NepaliCalendar } from '../src/index.js';
@@ -29,6 +30,60 @@ describe('NepaliCalendar', () => {
         // BS 2081-04-15 is AD 2024-07-30.
         expect(todayButton.querySelector('.osn-cal__day-ad')?.textContent).toBe('३०');
         expect(document.querySelectorAll('.osn-cal__day')).toHaveLength(32);
+    });
+
+    it('shows a Nepal Sambat month with tithis and BS dates alongside', () => {
+        render(<NepaliCalendar today={{ year: 2083, month: 7, day: 24 }} calendar="ns" />);
+
+        // Kartik 24, 2083 (Mha Puja) is the Nepal Sambat new year.
+        expect(title()).toBe('कछला ११४७');
+        expect(screen.getByText('कात्तिक/मंसिर २०८३')).toBeTruthy();
+        const newYear = screen.getByRole('button', { name: 'मङ्गलबार, ने.सं. ११४७ कछलाथ्व पारू' });
+        expect(newYear.getAttribute('title')).toBe('मङ्गलबार, ने.सं. ११४७ कछलाथ्व पारू');
+        expect(newYear.getAttribute('aria-current')).toBe('date');
+        expect(newYear.querySelector('.osn-cal__day-bs')?.textContent).toBe('१');
+        expect(newYear.querySelector('.osn-cal__day-ad')?.textContent).toBe('२४');
+    });
+
+    it('reports the Nepal Sambat date of a picked day', async () => {
+        const onChange = vi.fn();
+        render(
+            <NepaliCalendar
+                today={{ year: 2083, month: 7, day: 24 }}
+                defaultScript="roman"
+                calendar="ns"
+                onChange={onChange}
+            />,
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Mangalbar, NS 1147 Kachhala Thwa Paru' }));
+        expect(onChange).toHaveBeenCalledWith(
+            { year: 2083, month: 7, day: 24 },
+            { year: 2026, month: 11, day: 10 },
+            expect.objectContaining({ year: 1147, month: 1, isLeapMonth: false, paksha: 'thwa', tithi: 1 }),
+        );
+    });
+
+    it('lists a Nepal Sambat leap month in the month picker', async () => {
+        render(<NepaliCalendar today={{ year: 2083, month: 2, day: 10 }} defaultScript="roman" calendar="ns" />);
+
+        expect(title()).toBe('Anala (Tachhala) 1146');
+        const months = screen.getByRole('combobox', { name: 'Month' }) as HTMLSelectElement;
+        expect([...months.options].map((o) => o.text).slice(6, 9)).toEqual([
+            'Bachhala',
+            'Anala (Tachhala)',
+            'Tachhala',
+        ]);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+        expect(title()).toBe('Tachhala 1146');
+
+        // The year picker keeps the month by name, not by place.
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Year' }), '1147');
+        expect(title()).toBe('Tachhala 1147');
+        // Punhi spans two sunrises this month, so two days are marked.
+        expect(document.querySelectorAll('.osn-cal__day--punhi')).toHaveLength(2);
+        expect(document.querySelectorAll('.osn-cal__day--amai')).toHaveLength(1);
     });
 
     it('switches to Roman script with the toggle', async () => {
@@ -92,7 +147,11 @@ describe('NepaliCalendar', () => {
         const day = screen.getByRole('button', { name: 'Budhabar, 2 Shrawan 2081' });
         await userEvent.click(day);
 
-        expect(onChange).toHaveBeenCalledWith({ year: 2081, month: 4, day: 2 }, { year: 2024, month: 7, day: 17 });
+        expect(onChange).toHaveBeenCalledWith(
+            { year: 2081, month: 4, day: 2 },
+            { year: 2024, month: 7, day: 17 },
+            toNepalSambat({ year: 2081, month: 4, day: 2 }),
+        );
         expect(day.getAttribute('aria-pressed')).toBe('true');
     });
 
@@ -168,7 +227,7 @@ describe('NepaliCalendar', () => {
             expect(onChange).not.toHaveBeenCalled();
 
             await userEvent.click(screen.getByRole('button', { name: /, 10 Shrawan 2081$/ }));
-            expect(onChange).toHaveBeenCalledWith(min, { year: 2024, month: 7, day: 25 });
+            expect(onChange).toHaveBeenCalledWith(min, { year: 2024, month: 7, day: 25 }, toNepalSambat(min));
         });
 
         it('stops month navigation and limits the pickers to the range', async () => {
@@ -206,12 +265,12 @@ describe('NepaliCalendar', () => {
         });
     });
 
-    describe('BS and AD', () => {
+    describe('calendars', () => {
         it('switches to an AD month with BS dates alongside, and back', async () => {
             const onCalendarChange = vi.fn();
             render(<NepaliCalendar today={today} defaultScript="roman" onCalendarChange={onCalendarChange} />);
 
-            await userEvent.click(screen.getByRole('button', { name: 'Show AD calendar' }));
+            await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Calendar' }), 'ad');
             expect(onCalendarChange).toHaveBeenCalledWith('ad');
             // Shrawan 2081 is mostly in July 2024, but the middle of the month (15 Shrawan) is 30 July.
             expect(title()).toBe('July 2024');
@@ -225,7 +284,7 @@ describe('NepaliCalendar', () => {
             await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
             expect(title()).toBe('August 2024');
 
-            await userEvent.click(screen.getByRole('button', { name: 'Show BS calendar' }));
+            await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Calendar' }), 'bs');
             expect(title()).toBe('Shrawan 2081');
         });
 
@@ -244,9 +303,13 @@ describe('NepaliCalendar', () => {
             expect(title()).toBe('August 2024');
 
             await userEvent.click(screen.getByRole('button', { name: /, 20 August 2024$/ }));
-            expect(onChange).toHaveBeenCalledWith({ year: 2081, month: 5, day: 4 }, { year: 2024, month: 8, day: 20 });
+            expect(onChange).toHaveBeenCalledWith(
+                { year: 2081, month: 5, day: 4 },
+                { year: 2024, month: 8, day: 20 },
+                toNepalSambat({ year: 2081, month: 5, day: 4 }),
+            );
 
-            await userEvent.click(screen.getByRole('button', { name: 'Show BS calendar' }));
+            await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Calendar' }), 'bs');
             expect(title()).toBe('Bhadra 2081');
         });
 
@@ -282,9 +345,29 @@ describe('NepaliCalendar', () => {
             expect(title()).toBe('August 2024');
         });
 
-        it('labels the toggle in Nepali', () => {
+        it('offers every calendar in the dropdown, named in the shown script', () => {
             render(<NepaliCalendar today={today} />);
-            expect(screen.getByRole('button', { name: 'ईस्वी संवत्‌मा देखाउनुहोस्' }).textContent).toBe('ई.सं.');
+            const picker = screen.getByRole('combobox', { name: 'पात्रो' }) as HTMLSelectElement;
+            expect([...picker.options].map((o) => [o.value, o.text])).toEqual([
+                ['bs', 'विक्रम संवत्'],
+                ['ad', 'ईस्वी संवत्'],
+                ['ns', 'नेपाल संवत्'],
+            ]);
+            expect(picker.value).toBe('bs');
+        });
+
+        it('offers only the calendars it is given', async () => {
+            const { unmount } = render(<NepaliCalendar today={today} defaultScript="roman" calendars={['bs', 'ns']} />);
+            const picker = screen.getByRole('combobox', { name: 'Calendar' }) as HTMLSelectElement;
+            expect([...picker.options].map((o) => o.value)).toEqual(['bs', 'ns']);
+
+            await userEvent.selectOptions(picker, 'ns');
+            // The middle of Shrawan 2081 (15 Shrawan) is in Dilla 1144.
+            expect(title()).toBe('Dilla 1144');
+            unmount();
+
+            render(<NepaliCalendar today={today} calendars={['bs']} />);
+            expect(screen.queryByRole('combobox', { name: 'पात्रो' })).toBeNull();
         });
     });
 });

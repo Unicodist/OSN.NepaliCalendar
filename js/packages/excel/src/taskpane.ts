@@ -1,5 +1,5 @@
 // Entry point of taskpane.js: the converter on the Nepali Date task pane.
-import { formatBs, toAd, toBs } from '@opensourcenepal/nepali-calendar';
+import { formatBs, formatNepalSambat, toAd, toBs, toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { adToSerial, readAdDate, readBsDate } from './functions.js';
 
 interface ExcelRange {
@@ -70,7 +70,7 @@ void Office.onReady(() => {
         const bs = toBs(readAdDate(text));
         const iso = formatBs(bs, 'yyyy-MM-dd');
         return {
-            text: `${formatBs(bs, 'F')}\n${formatBs(bs, 'F', 'nepali')}`,
+            text: `${formatBs(bs, 'F')}\n${formatBs(bs, 'F', 'nepali')}\n${formatNepalSambat(toNepalSambat(bs))}`,
             insert: () => insert(iso, '@'),
         };
     });

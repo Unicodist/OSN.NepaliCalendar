@@ -1,19 +1,21 @@
 import { Component, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { type BsDate, type CalendarSystem, NepaliCalendarComponent, type Script } from '../src/public-api';
+import { type BsDate, type CalendarType, NepaliCalendarComponent, type Script } from '../src/public-api';
 
 const today: BsDate = { year: 2081, month: 4, day: 15 };
 
 @Component({
     imports: [NepaliCalendarComponent],
     template: `
-        <osn-nepali-calendar
+        <osn-calendar
             [today]="today"
             [(value)]="value"
             [(script)]="script"
             [(calendar)]="calendar"
+            [calendars]="calendars"
             [showCalendarToggle]="showCalendarToggle"
             [initialMonth]="initialMonth"
             [showAdDates]="showAdDates"
@@ -29,7 +31,8 @@ class HostComponent {
     today = today;
     value: BsDate | null = null;
     script: Script = 'nepali';
-    calendar: CalendarSystem = 'bs';
+    calendar: CalendarType = 'bs';
+    calendars: readonly CalendarType[] | null = null;
     showCalendarToggle = true;
     initialMonth: { year: number; month: number } | null = null;
     showAdDates = true;
@@ -95,7 +98,14 @@ async function setup(configure: (host: HostComponent) => void = () => {}) {
         await stable();
     };
     const title = () => shownMonth(root);
-    return { fixture, host: fixture.componentInstance, root, button, click, title, stable };
+    const picker = () => root.querySelector<HTMLSelectElement>('.osn-cal__calendar');
+    const pickCalendar = async (type: CalendarType) => {
+        const select = picker()!;
+        select.value = type;
+        select.dispatchEvent(new Event('change'));
+        await stable();
+    };
+    return { fixture, host: fixture.componentInstance, root, button, click, title, stable, picker, pickCalendar };
 }
 
 describe('NepaliCalendarComponent', () => {
@@ -108,6 +118,62 @@ describe('NepaliCalendarComponent', () => {
         expect(todayButton.getAttribute('aria-current')).toBe('date');
         expect(todayButton.querySelector('.osn-cal__day-ad')?.textContent).toBe('३०');
         expect(root.querySelectorAll('.osn-cal__day')).toHaveLength(32);
+    });
+
+    it('shows a Nepal Sambat month with tithis and BS dates alongside', async () => {
+        const { root, button, title } = await setup((h) => {
+            h.today = { year: 2083, month: 7, day: 24 };
+            h.calendar = 'ns';
+        });
+
+        // Kartik 24, 2083 (Mha Puja) is the Nepal Sambat new year.
+        expect(title()).toBe('कछला ११४७');
+        expect(root.querySelector('.osn-cal__title-ad')?.textContent).toBe('कात्तिक/मंसिर २०८३');
+        const newYear = button('मङ्गलबार, ने.सं. ११४७ कछलाथ्व पारू');
+        expect(newYear.getAttribute('title')).toBe('मङ्गलबार, ने.सं. ११४७ कछलाथ्व पारू');
+        expect(newYear.getAttribute('aria-current')).toBe('date');
+        expect(newYear.querySelector('.osn-cal__day-bs')?.textContent).toBe('१');
+        expect(newYear.querySelector('.osn-cal__day-ad')?.textContent).toBe('२४');
+    });
+
+    it('reports the Nepal Sambat date of a picked day', async () => {
+        const { host, button, stable } = await setup((h) =>
+            Object.assign(h, { today: { year: 2083, month: 7, day: 24 }, script: 'roman', calendar: 'ns' }),
+        );
+
+        button('Mangalbar, NS 1147 Kachhala Thwa Paru').click();
+        await stable();
+        expect(host.value).toEqual({ year: 2083, month: 7, day: 24 });
+        expect(host.picked).toEqual({
+            bs: { year: 2083, month: 7, day: 24 },
+            ad: { year: 2026, month: 11, day: 10 },
+            ns: expect.objectContaining({ year: 1147, month: 1, isLeapMonth: false, paksha: 'thwa', tithi: 1 }),
+        });
+    });
+
+    it('lists a Nepal Sambat leap month in the month picker', async () => {
+        const { root, click, title, stable } = await setup((h) =>
+            Object.assign(h, { today: { year: 2083, month: 2, day: 10 }, script: 'roman', calendar: 'ns' }),
+        );
+
+        expect(title()).toBe('Anala (Tachhala) 1146');
+        const months = root.querySelector<HTMLSelectElement>('.osn-cal__select--month')!;
+        expect([...months.options].map((o) => o.text.trim()).slice(6, 9)).toEqual([
+            'Bachhala',
+            'Anala (Tachhala)',
+            'Tachhala',
+        ]);
+
+        await click('Next month');
+        expect(title()).toBe('Tachhala 1146');
+
+        // The year picker keeps the month by name, not by place.
+        const years = root.querySelector<HTMLSelectElement>('.osn-cal__select--year')!;
+        years.value = '1147';
+        years.dispatchEvent(new Event('change'));
+        await stable();
+        expect(title()).toBe('Tachhala 1147');
+        expect(root.querySelector('.osn-cal__day--punhi')).not.toBeNull();
     });
 
     it('switches to Roman script with the toggle', async () => {
@@ -178,7 +244,11 @@ describe('NepaliCalendarComponent', () => {
         await click('Budhabar, 2 Shrawan 2081');
 
         expect(host.value).toEqual({ year: 2081, month: 4, day: 2 });
-        expect(host.picked).toEqual({ bs: { year: 2081, month: 4, day: 2 }, ad: { year: 2024, month: 7, day: 17 } });
+        expect(host.picked).toEqual({
+            bs: { year: 2081, month: 4, day: 2 },
+            ad: { year: 2024, month: 7, day: 17 },
+            ns: toNepalSambat({ year: 2081, month: 4, day: 2 }),
+        });
         expect(button('Budhabar, 2 Shrawan 2081').getAttribute('aria-pressed')).toBe('true');
     });
 
@@ -248,6 +318,8 @@ describe('NepaliCalendarComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(find('Shukrabar, 5 Baisakh 2082').disabled).toBe(true);
+        expect(root.querySelector<HTMLSelectElement>('.osn-cal__calendar')!.disabled).toBe(true);
+        expect(root.querySelector<HTMLButtonElement>('.osn-cal__script')!.disabled).toBe(true);
     });
 
     describe('min and max', () => {
@@ -321,11 +393,40 @@ describe('NepaliCalendarComponent', () => {
         });
     });
 
-    describe('BS and AD', () => {
-        it('switches to an AD month with BS dates alongside, and back', async () => {
-            const { host, root, click, title } = await setup((h) => (h.script = 'roman'));
+    describe('calendars', () => {
+        it('offers every calendar in the dropdown, named in the shown script', async () => {
+            const { picker } = await setup();
+            expect([...picker()!.options].map((o) => [o.value, o.text.trim()])).toEqual([
+                ['bs', 'विक्रम संवत्'],
+                ['ad', 'ईस्वी संवत्'],
+                ['ns', 'नेपाल संवत्'],
+            ]);
+            expect(picker()!.value).toBe('bs');
+            expect(picker()!.getAttribute('aria-label')).toBe('पात्रो');
+        });
 
-            await click('Show AD calendar');
+        it('offers only the calendars it is given', async () => {
+            const { host, picker, pickCalendar, title } = await setup((h) =>
+                Object.assign(h, { script: 'roman', calendars: ['bs', 'ns'] }),
+            );
+            expect([...picker()!.options].map((o) => o.value)).toEqual(['bs', 'ns']);
+
+            await pickCalendar('ns');
+            expect(host.calendar).toBe('ns');
+            // The middle of Shrawan 2081 (15 Shrawan) is in Dilla 1144.
+            expect(title()).toBe('Dilla 1144');
+        });
+
+        it('hides the dropdown with only one calendar', async () => {
+            const { picker, title } = await setup((h) => Object.assign(h, { calendar: 'ns', calendars: ['ns'] }));
+            expect(picker()).toBeNull();
+            expect(title()).toBe('दिल्ला ११४४');
+        });
+
+        it('switches to an AD month with BS dates alongside, and back', async () => {
+            const { host, root, click, title, pickCalendar } = await setup((h) => (h.script = 'roman'));
+
+            await pickCalendar('ad');
             expect(host.calendar).toBe('ad');
             expect(title()).toBe('July 2024');
             expect(root.querySelector('.osn-cal__title-ad')?.textContent).toBe('Ashadh/Shrawan 2081');
@@ -338,7 +439,7 @@ describe('NepaliCalendarComponent', () => {
             await click('Next month');
             expect(title()).toBe('August 2024');
 
-            await click('Show BS calendar');
+            await pickCalendar('bs');
             expect(host.calendar).toBe('bs');
             expect(title()).toBe('Shrawan 2081');
         });
@@ -355,6 +456,7 @@ describe('NepaliCalendarComponent', () => {
             expect(host.picked).toEqual({
                 bs: { year: 2081, month: 5, day: 4 },
                 ad: { year: 2024, month: 8, day: 20 },
+                ns: toNepalSambat({ year: 2081, month: 5, day: 4 }),
             });
         });
 

@@ -11,11 +11,13 @@ import {
     daysInMonth,
     formatBsText,
     monthName,
+    nsYear,
     readAdDate,
     readBsDate,
     serialToAd,
     toAdSerial,
     toBsText,
+    toNsText,
     todayText,
 } from '../src/functions.js';
 
@@ -110,6 +112,20 @@ describe('worksheet functions', () => {
         expect(() => daysInMonth(2082, 0)).toThrow(InputError);
         expect(monthName(6)).toBe('Ashwin');
         expect(monthName(6, 'nepali')).toBe('असोज');
+    });
+});
+
+describe('Nepal Sambat functions', () => {
+    it('TONS converts AD to a Nepal Sambat date', () => {
+        expect(toNsText(DASHAIN_SERIAL)).toBe('NS 1145 Kaula Thwa Dashami');
+        expect(toNsText(DASHAIN_SERIAL, 'G', 'nepali')).toBe('ने.सं. ११४५ कौलाथ्व दशमी');
+        expect(toNsText('2025-10-22', 'M')).toBe('Kachhala Thwa Paru');
+        expect(() => toNsText(DASHAIN_SERIAL, 'D')).toThrow(InputError);
+    });
+
+    it('NSYEAR changes at the Nepal Sambat new year', () => {
+        expect(nsYear('2025-10-21')).toBe(1145);
+        expect(nsYear('2025-10-22')).toBe(1146);
     });
 });
 

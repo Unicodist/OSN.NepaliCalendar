@@ -4,11 +4,13 @@ import {
     type Script,
     daysInMonth as bsDaysInMonth,
     formatBs,
+    formatNepalSambat,
     isSupportedYear,
     isValidBsDate,
     monthName as bsMonthName,
     toAd,
     toBs,
+    toNepalSambat,
 } from '@opensourcenepal/nepali-calendar';
 
 /** A cell value as Excel passes it to a custom function parameter of type `any`. */
@@ -190,6 +192,21 @@ export function monthName(month: CellValue, script?: CellValue): string {
     return bsMonthName(m, readScript(script));
 }
 
+/** `NEPALI.TONS(date, [format], [script])`: the Nepal Sambat date of an AD date, as text. */
+export function toNsText(date: CellValue, pattern?: CellValue, script?: CellValue): string {
+    const ns = toNepalSambat(toBsChecked(readAdDate(date)));
+    try {
+        return formatNepalSambat(ns, isBlank(pattern) ? 'G' : String(pattern), readScript(script));
+    } catch (error) {
+        throw error instanceof InputError ? error : new InputError((error as Error).message);
+    }
+}
+
+/** `NEPALI.NSYEAR(date)`: the Nepal Sambat year of an AD date. */
+export function nsYear(date: CellValue): number {
+    return toNepalSambat(toBsChecked(readAdDate(date))).year;
+}
+
 /** Every worksheet function, by the id it has in functions.json. */
 export const FUNCTIONS = {
     TOBS: toBsText,
@@ -202,4 +219,6 @@ export const FUNCTIONS = {
     TODAY: (pattern?: CellValue, script?: CellValue) => todayText(pattern, script),
     DAYSINMONTH: daysInMonth,
     MONTHNAME: monthName,
+    TONS: toNsText,
+    NSYEAR: nsYear,
 } as const;
