@@ -1,17 +1,21 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+    type CellValue,
     FUNCTIONS,
     InputError,
+    RANGE_FUNCTIONS,
     adToSerial,
     bsDateSerial,
     bsDay,
     bsMonth,
     bsYear,
+    convertCells,
     daysInMonth,
     formatBsText,
     monthName,
     nsYear,
+    overRange,
     readAdDate,
     readBsDate,
     serialToAd,
@@ -137,5 +141,62 @@ describe('functions.json', () => {
     it('describes every function and nothing else', () => {
         expect(metadata.functions.map((f) => f.id).sort()).toEqual(Object.keys(FUNCTIONS).sort());
         expect(metadata.functions.every((f) => f.name === f.id)).toBe(true);
+    });
+});
+
+describe('ranges', () => {
+    const toError = (error: unknown) => `#VALUE! ${(error as Error).message}`;
+
+    it('converts each cell of a range and keeps blanks blank', () => {
+        const tobs = overRange(toBsText as (...a: CellValue[]) => unknown, toError);
+        expect(tobs([[DASHAIN_SERIAL], [''], [null], ['2025-04-14']])).toEqual([
+            ['2082-06-16'],
+            [''],
+            [''],
+            ['2082-01-01'],
+        ]);
+        expect(tobs([[DASHAIN_SERIAL, '2025-04-14']], 'D', 'nepali')).toEqual([['१६ असोज २०८२', '१ बैशाख २०८२']]);
+    });
+
+    it('puts an error in each cell that fails', () => {
+        const toad = overRange(toAdSerial as (...a: CellValue[]) => unknown, toError);
+        expect(toad([['2082-06-16'], ['2082-06-32']])).toEqual([
+            [DASHAIN_SERIAL],
+            ['#VALUE! 2082-6-32 is not a BS date between 1970-01-01 and 2090-12-30.'],
+        ]);
+    });
+
+    it('throws for a single cell, like a plain value', () => {
+        const toad = overRange(toAdSerial as (...a: CellValue[]) => unknown, toError);
+        expect(toad([['2082-06-16']])).toEqual([[DASHAIN_SERIAL]]);
+        expect(() => toad([['']])).toThrow('The date is empty.');
+    });
+
+    it('lists only functions that exist, each with a range first parameter in functions.json', () => {
+        const metadata = JSON.parse(readFileSync(new URL('../src/functions.json', import.meta.url), 'utf8')) as {
+            functions: { id: string; result: { dimensionality?: string }; parameters: { dimensionality?: string }[] }[];
+        };
+        for (const f of metadata.functions) {
+            const isRange = RANGE_FUNCTIONS.has(f.id as keyof typeof FUNCTIONS);
+            expect([f.id, f.parameters[0]?.dimensionality === 'matrix'], f.id).toEqual([f.id, isRange]);
+            expect([f.id, f.result.dimensionality === 'matrix'], f.id).toEqual([f.id, isRange]);
+        }
+    });
+});
+
+describe('convertCells', () => {
+    it('converts AD to BS text and counts what failed', () => {
+        expect(convertCells([[DASHAIN_SERIAL], [''], ['nope']], 'toBs')).toEqual({
+            values: [['2082-06-16'], [''], ['']],
+            numberFormat: [['@'], ['@'], ['@']],
+            converted: 1,
+            failed: 1,
+        });
+    });
+
+    it('converts BS to Excel dates', () => {
+        const result = convertCells([['2082-06-16', '२०८२-०१-०१']], 'toAd');
+        expect(result.values).toEqual([[DASHAIN_SERIAL, adToSerial({ year: 2025, month: 4, day: 14 })]]);
+        expect(result.numberFormat).toEqual([['yyyy-mm-dd', 'yyyy-mm-dd']]);
     });
 });

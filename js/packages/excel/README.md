@@ -4,8 +4,10 @@ An Excel add-in that converts dates between AD and Nepali (Bikram Sambat, BS) wi
 functions. It works in Excel on Windows, Mac and the web, and covers the same range as the rest
 of OSN.NepaliCalendar: BS 1970-01-01 to BS 2090-12-30 (AD 1913-04-13 to AD 2034-04-13).
 
-It also adds a **Nepali Date** button to the Home tab, which opens a converter that can insert a
-date in the selected cell, and a short reference of the functions.
+It also adds a **Nepali Date** button to the Home tab. It opens a task pane that converts the
+selected cells (writing the results into the column to their right, and never over existing data),
+a converter that can insert a single date in the selected cell, and a short reference of the
+functions.
 
 ## Functions
 
@@ -24,6 +26,9 @@ date in the selected cell, and a short reference of the functions.
 | `=NEPALI.DAYSINMONTH(year, month)`          | The number of days in a BS month.                                 | `=NEPALI.DAYSINMONTH(2081, 2)` → `32`                |
 | `=NEPALI.MONTHNAME(month, [script])`        | The name of a BS month.                                           | `=NEPALI.MONTHNAME(6, "nepali")` → `असोज`            |
 
+- **Ranges:** `TOBS`, `TOAD`, `YEAR`, `MONTH`, `DAY`, `FORMAT`, `TONS` and `NSYEAR` also take a range,
+  like `=NEPALI.TOBS(A2:A500)`, and spill one result per cell. Blank cells stay blank, and a cell
+  that can't be converted shows `#VALUE!` without stopping the rest.
 - **AD dates** (`date`) are Excel dates, or text like `2025-10-02`. The time of day is ignored.
 - **BS dates** (`bs_date`) are text like `2082-06-16`, `2082/6/16` or `२०८२-०६-१६`. When you type
   `2082-06-16` into a cell, Excel turns it into the AD date 16 June 2082; the functions read that
@@ -51,8 +56,8 @@ Dashami`) and `Y` (`NS 1145`), the same as `NepalSambatDate.ToString` in .NET. E
 Once the add-in is deployed (see below), its manifest is at
 `https://unicodist.github.io/OSN.NepaliCalendar/excel/manifest.xml`. Download it, then:
 
-- **Excel on the web:** Home > Add-ins > More Add-ins > My Add-ins > Upload My Add-in, and pick
-  `manifest.xml`.
+- **Excel on the web:** Home > Add-ins > More Settings > Upload My Add-in, then Browse to
+  `manifest.xml` and Upload. The browser keeps it, so clearing its cache removes it.
 - **Excel on Windows:** put `manifest.xml` in a shared network folder, add that folder under
   File > Options > Trust Center > Trust Center Settings > Trusted Add-in Catalogs (tick "Show in
   Menu"), restart Excel, then Home > Add-ins > More Add-ins > Shared Folder.

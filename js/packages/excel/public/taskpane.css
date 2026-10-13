@@ -85,6 +85,15 @@ button {
     cursor: pointer;
 }
 
+.buttons {
+    display: flex;
+    gap: 8px;
+}
+
+p {
+    margin: 0 0 8px;
+}
+
 button:disabled {
     opacity: 0.5;
     cursor: default;

@@ -11,6 +11,16 @@
         <main>
             <h1>Nepali Calendar</h1>
 
+            <section aria-labelledby="selection">
+                <h2 id="selection">Convert selected cells</h2>
+                <p>Select a column of dates. The converted dates go in the column to its right.</p>
+                <div class="buttons">
+                    <button id="selection-to-bs" type="button">AD to BS</button>
+                    <button id="selection-to-ad" type="button">BS to AD</button>
+                </div>
+                <output id="selection-result"></output>
+            </section>
+
             <section aria-labelledby="ad-to-bs">
                 <h2 id="ad-to-bs">AD to BS</h2>
                 <label for="ad-input">AD date</label>
@@ -33,6 +43,8 @@
                 <dl>
                     <dt><code>=NEPALI.TOBS(A1)</code></dt>
                     <dd>BS date of the AD date in A1, like <code>2082-06-16</code>.</dd>
+                    <dt><code>=NEPALI.TOBS(A1:A100)</code></dt>
+                    <dd>A whole range at once. The results spill into the cells below the formula.</dd>
                     <dt><code>=NEPALI.TOBS(A1, "D", "nepali")</code></dt>
                     <dd>The same date as <code>१६ असोज २०८२</code>.</dd>
                     <dt><code>=NEPALI.TOAD("2082-06-16")</code></dt>
