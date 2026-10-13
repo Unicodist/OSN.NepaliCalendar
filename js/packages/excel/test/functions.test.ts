@@ -194,11 +194,12 @@ describe('broadcast', () => {
         expect(run('TOBS')(column)).toEqual([['2082-06-16']]);
     });
 
-    it('takes a range in every parameter of every function in functions.json', () => {
+    it('takes a range in every parameter of every converting function in functions.json', () => {
         const metadata = JSON.parse(readFileSync(new URL('../src/functions.json', import.meta.url), 'utf8')) as {
             functions: { id: string; result: { dimensionality?: string }; parameters: { dimensionality?: string }[] }[];
         };
-        for (const f of metadata.functions) {
+        // TODAY has no value to convert, so it stays a plain function.
+        for (const f of metadata.functions.filter((f) => f.id !== 'TODAY')) {
             expect([f.id, f.result.dimensionality], f.id).toEqual([f.id, 'matrix']);
             expect(
                 f.parameters.every((p) => p.dimensionality === 'matrix'),
