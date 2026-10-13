@@ -1,5 +1,5 @@
 // Entry point of functions.js, which Excel loads in its custom functions runtime.
-import { FUNCTIONS, InputError, RANGE_FUNCTIONS, overRange } from './functions.js';
+import { FUNCTIONS, InputError, broadcast } from './functions.js';
 
 declare const CustomFunctions: {
     associate(id: string, fn: (...args: never[]) => unknown): void;
@@ -14,12 +14,11 @@ function toExcelError(error: unknown): unknown {
     return error;
 }
 
-for (const [id, fn] of Object.entries(FUNCTIONS)) {
-    const scalar = fn as (...args: unknown[]) => unknown;
-    const impl = RANGE_FUNCTIONS.has(id as keyof typeof FUNCTIONS) ? overRange(scalar, toExcelError) : scalar;
+for (const [id, { fn, values }] of Object.entries(FUNCTIONS)) {
+    const run = broadcast(fn, values, toExcelError);
     CustomFunctions.associate(id, (...args: never[]) => {
         try {
-            return (impl as (...a: never[]) => unknown)(...args);
+            return run(...args);
         } catch (error) {
             throw toExcelError(error);
         }

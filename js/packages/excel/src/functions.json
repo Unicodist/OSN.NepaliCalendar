@@ -11,21 +11,23 @@
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "description": "An Excel date, or AD text like 2025-10-02 or 2 Oct 2025. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         },
         {
           "name": "format",
           "description": "Optional. A format like \"yyyy-MM-dd\" (default), \"D\" for 16 Ashwin 2082 or \"dddd, d MMMM yyyy\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -40,7 +42,7 @@
       "parameters": [
         {
           "name": "bs_date",
-          "description": "BS text like 2082-06-16, or a range of them.",
+          "description": "BS text like 2082-06-16 or 16 Ashwin 2082. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         }
@@ -51,23 +53,27 @@
       "name": "DATE",
       "description": "Returns the AD date of a Nepali (BS) year, month and day. Format the cell as a date.",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "year",
           "description": "The BS year, 1970 to 2090.",
-          "type": "number"
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "month",
-          "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).",
-          "type": "number"
+          "description": "The BS month: 1 (Baisakh) to 12 (Chaitra), or its name.",
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "day",
           "description": "The day of the BS month.",
-          "type": "number"
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -82,7 +88,7 @@
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "description": "An Excel date, or AD text like 2025-10-02 or 2 Oct 2025. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         }
@@ -99,7 +105,7 @@
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "description": "An Excel date, or AD text like 2025-10-02 or 2 Oct 2025. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         }
@@ -116,7 +122,7 @@
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "description": "An Excel date, or AD text like 2025-10-02 or 2 Oct 2025. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         }
@@ -133,20 +139,23 @@
       "parameters": [
         {
           "name": "bs_date",
-          "description": "BS text like 2082-06-16, or a range of them.",
+          "description": "BS text like 2082-06-16 or 16 Ashwin 2082. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         },
         {
           "name": "format",
-          "description": "A format like \"D\" for 16 Ashwin 2082, or \"d MMMM yyyy\".",
-          "type": "string"
+          "description": "Optional. A format like \"D\" for 16 Ashwin 2082, or \"d MMMM yyyy\". The default is \"yyyy-MM-dd\".",
+          "type": "any",
+          "dimensionality": "matrix",
+          "optional": true
         },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -155,7 +164,8 @@
       "name": "TODAY",
       "description": "Returns today's Nepali (BS) date, as text.",
       "result": {
-        "type": "string"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "options": {
         "volatile": true
@@ -164,14 +174,16 @@
         {
           "name": "format",
           "description": "Optional. A format like \"yyyy-MM-dd\" (default) or \"D\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -180,18 +192,21 @@
       "name": "DAYSINMONTH",
       "description": "Returns the number of days in a Nepali (BS) month.",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "year",
           "description": "The BS year, 1970 to 2090.",
-          "type": "number"
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "month",
-          "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).",
-          "type": "number"
+          "description": "The BS month: 1 (Baisakh) to 12 (Chaitra), or its name.",
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -200,19 +215,22 @@
       "name": "MONTHNAME",
       "description": "Returns the name of a Nepali (BS) month.",
       "result": {
-        "type": "string"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "month",
-          "description": "The BS month, 1 (Baisakh) to 12 (Chaitra).",
-          "type": "number"
+          "description": "The BS month: 1 (Baisakh) to 12 (Chaitra), or its name.",
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -227,21 +245,23 @@
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "description": "An Excel date, or AD text like 2025-10-02 or 2 Oct 2025. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         },
         {
           "name": "format",
           "description": "Optional. \"G\" for NS 1145 Kaula Thwa Dashami (default), \"M\" without the year, or \"Y\" for the year only.",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
-          "type": "string",
-          "optional": true
+          "type": "any",
+          "optional": true,
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -256,7 +276,7 @@
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "description": "An Excel date, or AD text like 2025-10-02 or 2 Oct 2025. A range converts every cell.",
           "type": "any",
           "dimensionality": "matrix"
         }
