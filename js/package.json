@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/core",
     "packages/react",
-    "packages/angular"
+    "packages/angular",
+    "packages/excel"
   ],
   "engines": {
     "node": "^22.22.3 || >=24.15.0"

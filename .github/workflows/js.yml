@@ -65,6 +65,12 @@ jobs:
           name: npm-packages
           path: artifacts/*.tgz
 
+      - name: Upload the Excel add-in
+        uses: actions/upload-artifact@v4
+        with:
+          name: excel-addin
+          path: js/packages/excel/dist
+
       - name: Upload Storybooks
         uses: actions/upload-artifact@v4
         with:

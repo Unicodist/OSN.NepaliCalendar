@@ -11,6 +11,7 @@ Nepali (Bikram Sambat) calendar utilities for .NET.
 - React and Angular calendar components, on a TypeScript core, in [`js/`](js/README.md).
 - Nepal Sambat (नेपाल संवत्), the Newar lunar calendar: the NS year and the full lunar date (month, paksha and tithi) of every day.
 - Calendar systems as objects (`CalendarSystem` in .NET, `getCalendar` in JS) for BS, AD and Nepal Sambat, so new calendars slot in the same way. The calendar components switch between them with a dropdown.
+- An Excel add-in with worksheet functions like `=NEPALI.TOBS(A1)`, in [`js/packages/excel`](js/packages/excel/README.md).
 
 > **Status:** early scaffolding. The public API is not stable yet.
 
@@ -62,13 +63,13 @@ date.ToString("d", new CultureInfo("ne-NP"));     // २०८१-०४-१५
 date.ToString("dd/MM/yyyy", NepaliDateFormatInfo.Roman); // 15/04/2081
 ```
 
-| Format | Roman | Nepali |
-| --- | --- | --- |
-| `d` (default) | `2081-04-15` | `२०८१-०४-१५` |
-| `D` | `15 Shrawan 2081` | `१५ साउन २०८१` |
-| `F` | `Mangalbar, 15 Shrawan 2081` | `मङ्गलबार, १५ साउन २०८१` |
-| `M` | `15 Shrawan` | `१५ साउन` |
-| `Y` | `Shrawan 2081` | `साउन २०८१` |
+| Format        | Roman                        | Nepali                   |
+| ------------- | ---------------------------- | ------------------------ |
+| `d` (default) | `2081-04-15`                 | `२०८१-०४-१५`             |
+| `D`           | `15 Shrawan 2081`            | `१५ साउन २०८१`           |
+| `F`           | `Mangalbar, 15 Shrawan 2081` | `मङ्गलबार, १५ साउन २०८१` |
+| `M`           | `15 Shrawan`                 | `१५ साउन`                |
+| `Y`           | `Shrawan 2081`               | `साउन २०८१`              |
 
 Custom formats use `yyyy`, `yy`, `MMMM` (month name), `MM`, `M`, `dddd` (weekday), `ddd`
 (short weekday), `dd` and `d`; quote literal text (`'Year' yyyy`) or escape it with `\`.
@@ -174,7 +175,7 @@ src/OSN.NepaliCalendar/          The library (NuGet package)
 tests/OSN.NepaliCalendar.Tests/  xUnit tests
 Directory.Build.props            Shared build settings and package metadata
 Directory.Packages.props         Central package versions
-js/                              npm workspaces: TypeScript core, React and Angular components
+js/                              npm workspaces: TypeScript core, React and Angular components, Excel add-in
 tools/nepal-sambat/              Generator for the Nepal Sambat table
 ```
 

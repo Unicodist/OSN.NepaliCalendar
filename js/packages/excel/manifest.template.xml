@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- scripts/build.mjs writes dist/manifest.xml from this file, with {{BASE_URL}} set to where dist/ is hosted. -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>ae92e7bd-5c6d-48f7-bb0c-19c4a12f9a53</Id>
+  <Version>{{VERSION}}</Version>
+  <ProviderName>Open Source Nepal</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Nepali Calendar" />
+  <Description DefaultValue="Convert dates between AD and Nepali (Bikram Sambat) with worksheet functions like =NEPALI.TOBS(A1) and =NEPALI.TOAD(B1)." />
+  <IconUrl DefaultValue="{{BASE_URL}}assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="{{BASE_URL}}assets/icon-64.png" />
+  <SupportUrl DefaultValue="https://github.com/Unicodist/OSN.NepaliCalendar/issues" />
+  <AppDomains>
+    <AppDomain>{{ORIGIN}}</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Workbook" />
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="CustomFunctionsRuntime" MinVersion="1.1" />
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="{{BASE_URL}}taskpane.html" />
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <AllFormFactors>
+          <ExtensionPoint xsi:type="CustomFunctions">
+            <Script>
+              <SourceLocation resid="Functions.Script.Url" />
+            </Script>
+            <Page>
+              <SourceLocation resid="Functions.Page.Url" />
+            </Page>
+            <Metadata>
+              <SourceLocation resid="Functions.Metadata.Url" />
+            </Metadata>
+            <Namespace resid="Functions.Namespace" />
+          </ExtensionPoint>
+        </AllFormFactors>
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title" />
+            <Description resid="GetStarted.Description" />
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl" />
+          </GetStarted>
+          <FunctionFile resid="Commands.Url" />
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="NepaliCalendar.Group">
+                <Label resid="Group.Label" />
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16" />
+                  <bt:Image size="32" resid="Icon.32" />
+                  <bt:Image size="80" resid="Icon.80" />
+                </Icon>
+                <Control xsi:type="Button" id="NepaliCalendar.TaskpaneButton">
+                  <Label resid="Button.Label" />
+                  <Supertip>
+                    <Title resid="Button.Label" />
+                    <Description resid="Button.Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16" />
+                    <bt:Image size="32" resid="Icon.32" />
+                    <bt:Image size="80" resid="Icon.80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>NepaliCalendar.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="{{BASE_URL}}assets/icon-16.png" />
+        <bt:Image id="Icon.32" DefaultValue="{{BASE_URL}}assets/icon-32.png" />
+        <bt:Image id="Icon.80" DefaultValue="{{BASE_URL}}assets/icon-80.png" />
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Functions.Script.Url" DefaultValue="{{BASE_URL}}functions.js" />
+        <bt:Url id="Functions.Metadata.Url" DefaultValue="{{BASE_URL}}functions.json" />
+        <bt:Url id="Functions.Page.Url" DefaultValue="{{BASE_URL}}functions.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="{{BASE_URL}}taskpane.html" />
+        <bt:Url id="Commands.Url" DefaultValue="{{BASE_URL}}commands.html" />
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://github.com/Unicodist/OSN.NepaliCalendar/tree/main/js/packages/excel#readme" />
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Functions.Namespace" DefaultValue="NEPALI" />
+        <bt:String id="GetStarted.Title" DefaultValue="Nepali Calendar is ready" />
+        <bt:String id="Group.Label" DefaultValue="Nepali Calendar" />
+        <bt:String id="Button.Label" DefaultValue="Nepali Date" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Type =NEPALI. in a cell to see the functions, or open Nepali Date on the Home tab for a converter and examples." />
+        <bt:String id="Button.Tooltip" DefaultValue="Convert between AD and Nepali (BS) dates and see the NEPALI worksheet functions." />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

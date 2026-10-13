@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Nepali Calendar</title>
+        <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+        <link rel="stylesheet" href="taskpane.css" />
+    </head>
+    <body>
+        <main>
+            <h1>Nepali Calendar</h1>
+
+            <section aria-labelledby="ad-to-bs">
+                <h2 id="ad-to-bs">AD to BS</h2>
+                <label for="ad-input">AD date</label>
+                <input id="ad-input" type="date" min="1913-04-13" max="2034-04-13" />
+                <output id="ad-result" for="ad-input"></output>
+                <button id="ad-insert" type="button" disabled>Insert BS date in selected cell</button>
+            </section>
+
+            <section aria-labelledby="bs-to-ad">
+                <h2 id="bs-to-ad">BS to AD</h2>
+                <label for="bs-input">BS date</label>
+                <input id="bs-input" type="text" placeholder="2082-06-16" inputmode="numeric" autocomplete="off" />
+                <output id="bs-result" for="bs-input"></output>
+                <button id="bs-insert" type="button" disabled>Insert AD date in selected cell</button>
+            </section>
+
+            <section aria-labelledby="functions">
+                <h2 id="functions">Worksheet functions</h2>
+                <p>Type <code>=NEPALI.</code> in a cell to see them all.</p>
+                <dl>
+                    <dt><code>=NEPALI.TOBS(A1)</code></dt>
+                    <dd>BS date of the AD date in A1, like <code>2082-06-16</code>.</dd>
+                    <dt><code>=NEPALI.TOBS(A1, "D", "nepali")</code></dt>
+                    <dd>The same date as <code>१६ असोज २०८२</code>.</dd>
+                    <dt><code>=NEPALI.TOAD("2082-06-16")</code></dt>
+                    <dd>AD date of a BS date. Format the cell as a date.</dd>
+                    <dt><code>=NEPALI.DATE(2082, 6, 16)</code></dt>
+                    <dd>AD date of a BS year, month and day.</dd>
+                    <dt><code>=NEPALI.YEAR(A1)</code>, <code>MONTH</code>, <code>DAY</code></dt>
+                    <dd>Parts of the BS date of an AD date.</dd>
+                    <dt><code>=NEPALI.FORMAT(B1, "dddd, d MMMM yyyy")</code></dt>
+                    <dd>Reformats a BS date.</dd>
+                    <dt><code>=NEPALI.TODAY()</code></dt>
+                    <dd>Today's BS date.</dd>
+                    <dt><code>=NEPALI.TONS(A1)</code>, <code>=NEPALI.NSYEAR(A1)</code></dt>
+                    <dd>Nepal Sambat date, like <code>NS 1145 Kaula Thwa Dashami</code>, and year.</dd>
+                    <dt><code>=NEPALI.DAYSINMONTH(2082, 6)</code>, <code>=NEPALI.MONTHNAME(6)</code></dt>
+                    <dd>Month length and name.</dd>
+                </dl>
+                <p>
+                    Formats: <code>d</code> 2082-06-16, <code>D</code> 16 Ashwin 2082, <code>F</code> Bihibar, 16 Ashwin
+                    2082, or custom with <code>yyyy MM MMMM dd d dddd ddd</code>.
+                </p>
+                <p>
+                    <a
+                        href="https://github.com/Unicodist/OSN.NepaliCalendar/tree/main/js/packages/excel#readme"
+                        target="_blank"
+                        rel="noopener"
+                        >Full reference</a
+                    >
+                </p>
+            </section>
+        </main>
+        <script src="taskpane.js"></script>
+    </body>
+</html>
