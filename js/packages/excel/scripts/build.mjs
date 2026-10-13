@@ -34,6 +34,17 @@ await build({
 cpSync(new URL('public/', root), dist, { recursive: true });
 cpSync(new URL('src/functions.json', root), new URL('functions.json', dist));
 
+// Point the pages at this version's scripts, so a browser or Office cache never pairs a new page with
+// an old script.
+for (const page of ['functions.html', 'taskpane.html']) {
+    const file = new URL(page, dist);
+    const html = readFileSync(file, 'utf8').replace(
+        /(src|href)="(functions\.js|taskpane\.js|taskpane\.css)"/g,
+        `$1="$2?v=${version}"`,
+    );
+    writeFileSync(file, html);
+}
+
 const manifest = readFileSync(new URL('manifest.template.xml', root), 'utf8')
     .replaceAll('{{BASE_URL}}', baseUrl)
     .replaceAll('{{ORIGIN}}', new URL(baseUrl).origin)

@@ -164,8 +164,7 @@
       "name": "TODAY",
       "description": "Returns today's Nepali (BS) date, as text.",
       "result": {
-        "type": "any",
-        "dimensionality": "matrix"
+        "type": "string"
       },
       "options": {
         "volatile": true
@@ -174,16 +173,14 @@
         {
           "name": "format",
           "description": "Optional. A format like \"yyyy-MM-dd\" (default) or \"D\".",
-          "type": "any",
-          "optional": true,
-          "dimensionality": "matrix"
+          "type": "string",
+          "optional": true
         },
         {
           "name": "script",
           "description": "Optional. \"roman\" (default) or \"nepali\".",
-          "type": "any",
-          "optional": true,
-          "dimensionality": "matrix"
+          "type": "string",
+          "optional": true
         }
       ]
     },
