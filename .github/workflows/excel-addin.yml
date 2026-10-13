@@ -1,0 +1,63 @@
+name: Excel add-in
+
+# Deploys the Excel add-in (js/packages/excel) to GitHub Pages, at
+# https://unicodist.github.io/OSN.NepaliCalendar/excel/. Run it from the Actions tab after
+# Pages is set to deploy from GitHub Actions (Settings > Pages > Source). See
+# js/packages/excel/README.md.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy the Excel add-in
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}excel/manifest.xml
+
+    defaults:
+      run:
+        working-directory: js
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test -w packages/core -w packages/excel
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build
+        env:
+          ADDIN_BASE_URL: ${{ steps.pages.outputs.base_url }}/excel/
+        run: |
+          npm run build -w packages/excel
+          mkdir -p ../site
+          cp -r packages/excel/dist ../site/excel
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -7,6 +7,7 @@ npm workspaces with the JavaScript side of OSN.NepaliCalendar:
 | [`@opensourcenepal/nepali-calendar`](packages/core)            | Framework-free TypeScript core: AD/BS conversion, validation, Roman and Devanagari names and formatting, and the month grid the components draw. |
 | [`@opensourcenepal/nepali-calendar-react`](packages/react)     | `<NepaliCalendar>` for React 18+.                                                                                                                |
 | [`@opensourcenepal/nepali-calendar-angular`](packages/angular) | `<osn-nepali-calendar>` for Angular 22, usable with `[(value)]` or as a form control.                                                            |
+| [Excel add-in](packages/excel)                                 | `=NEPALI.TOBS(A1)`, `=NEPALI.TOAD(B1)` and other worksheet functions for Excel on Windows, Mac and the web. Not published to npm.                |
 
 Both components show a BS month with each AD day under its BS day and the AD months in the
 header (or, switched to AD, an AD month with each BS day under it), switch between Nepali and Roman script, jump to any month and year from the header
@@ -93,8 +94,8 @@ Requires Node 22.22.3+ or 24.15+ and npm 11.
 ```shell
 cd js
 npm install
-npm test           # Vitest for all three packages
-npm run build      # core and React with tsc, Angular with ng-packagr (into packages/angular/dist)
+npm test           # Vitest for every package
+npm run build      # core and React with tsc, Angular with ng-packagr (into packages/angular/dist), Excel with esbuild
 npm run typecheck
 npm run lint       # Prettier
 ```

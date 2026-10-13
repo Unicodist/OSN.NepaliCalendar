@@ -55,3 +55,10 @@ nuget.org.
      the READMEs back afterwards, so nothing changes in your checkout.
 
 A version with a suffix, such as `nuget-v1.1.0-beta.1`, is published as a pre-release.
+
+## Excel add-in
+
+The Excel add-in (`js/packages/excel`) is not tagged or published to npm. Bump `version` in its
+`package.json`, merge, and run the **Excel add-in** workflow from the Actions tab, which deploys it
+to GitHub Pages. Excel picks up the new version the next time the add-in loads. Its
+[README](js/packages/excel/README.md) covers the one-time Pages setup and AppSource.
