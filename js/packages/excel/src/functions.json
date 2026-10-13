@@ -5,13 +5,15 @@
       "name": "TOBS",
       "description": "Converts an AD date to a Nepali (BS) date, as text.",
       "result": {
-        "type": "string"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02.",
-          "type": "any"
+          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "format",
@@ -32,13 +34,15 @@
       "name": "TOAD",
       "description": "Converts a Nepali (BS) date to an AD date. Format the cell as a date.",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "bs_date",
-          "description": "BS text like 2082-06-16.",
-          "type": "any"
+          "description": "BS text like 2082-06-16, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -72,13 +76,15 @@
       "name": "YEAR",
       "description": "Returns the Nepali (BS) year of an AD date.",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02.",
-          "type": "any"
+          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -87,13 +93,15 @@
       "name": "MONTH",
       "description": "Returns the Nepali (BS) month of an AD date, 1 (Baisakh) to 12 (Chaitra).",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02.",
-          "type": "any"
+          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -102,13 +110,15 @@
       "name": "DAY",
       "description": "Returns the day of the Nepali (BS) month of an AD date.",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02.",
-          "type": "any"
+          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     },
@@ -117,13 +127,15 @@
       "name": "FORMAT",
       "description": "Formats a Nepali (BS) date, for example in Devanagari or with the month name.",
       "result": {
-        "type": "string"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "bs_date",
-          "description": "BS text like 2082-06-16.",
-          "type": "any"
+          "description": "BS text like 2082-06-16, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "format",
@@ -209,13 +221,15 @@
       "name": "TONS",
       "description": "Converts an AD date to a Nepal Sambat (नेपाल संवत्) lunar date, as text.",
       "result": {
-        "type": "string"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02.",
-          "type": "any"
+          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         },
         {
           "name": "format",
@@ -236,13 +250,15 @@
       "name": "NSYEAR",
       "description": "Returns the Nepal Sambat year of an AD date.",
       "result": {
-        "type": "number"
+        "type": "any",
+        "dimensionality": "matrix"
       },
       "parameters": [
         {
           "name": "date",
-          "description": "An Excel date, or AD text like 2025-10-02.",
-          "type": "any"
+          "description": "An Excel date, or AD text like 2025-10-02, or a range of them.",
+          "type": "any",
+          "dimensionality": "matrix"
         }
       ]
     }

@@ -222,3 +222,79 @@ export const FUNCTIONS = {
     TONS: toNsText,
     NSYEAR: nsYear,
 } as const;
+
+/** The functions whose first parameter also takes a range, like `=NEPALI.TOBS(A1:A100)`. */
+export const RANGE_FUNCTIONS: ReadonlySet<keyof typeof FUNCTIONS> = new Set([
+    'TOBS',
+    'TOAD',
+    'YEAR',
+    'MONTH',
+    'DAY',
+    'FORMAT',
+    'TONS',
+    'NSYEAR',
+]);
+
+/**
+ * Applies a function to each cell of the range Excel passes as its first argument, returning a range
+ * of the same shape that spills into the cells below and beside the formula. A single cell behaves
+ * like a plain value, so its errors are thrown. In a larger range, blank cells stay blank and a cell
+ * that fails gets the error from `toError` in its place.
+ */
+export function overRange(
+    fn: (first: CellValue, ...rest: CellValue[]) => unknown,
+    toError: (error: unknown) => unknown,
+): (first: CellValue[][], ...rest: CellValue[]) => unknown[][] {
+    return (first, ...rest) => {
+        if (first.length === 1 && first[0]!.length === 1) {
+            return [[fn(first[0]![0], ...rest)]];
+        }
+        return first.map((row) =>
+            row.map((cell) => {
+                if (isBlank(cell)) {
+                    return '';
+                }
+                try {
+                    return fn(cell, ...rest);
+                } catch (error) {
+                    return toError(error);
+                }
+            }),
+        );
+    };
+}
+
+/** The result of converting a block of cells with the task pane. */
+export interface ConvertedCells {
+    values: (string | number)[][];
+    numberFormat: string[][];
+    converted: number;
+    failed: number;
+}
+
+/**
+ * Converts each cell of a block: `toBs` turns AD dates into BS text, `toAd` turns BS dates into
+ * Excel dates. Blank cells stay blank, and cells that cannot be converted are left blank and counted.
+ */
+export function convertCells(values: CellValue[][], direction: 'toBs' | 'toAd'): ConvertedCells {
+    let converted = 0;
+    let failed = 0;
+    const result = values.map((row) =>
+        row.map((cell): string | number => {
+            if (isBlank(cell)) {
+                return '';
+            }
+            try {
+                const value = direction === 'toBs' ? toBsText(cell) : toAdSerial(cell);
+                converted++;
+                return value;
+            } catch {
+                failed++;
+                return '';
+            }
+        }),
+    );
+    // Text format keeps BS text like 2082-06-16 from being read as a date.
+    const format = direction === 'toBs' ? '@' : 'yyyy-mm-dd';
+    return { values: result, numberFormat: values.map((row) => row.map(() => format)), converted, failed };
+}
