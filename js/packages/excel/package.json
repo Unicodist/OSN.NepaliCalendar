@@ -1,6 +1,6 @@
 {
   "name": "@opensourcenepal/nepali-calendar-excel",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Excel add-in with worksheet functions for Nepali (Bikram Sambat) dates: AD/BS conversion and formatting.",
   "license": "MIT",
@@ -13,7 +13,7 @@
     "serve": "node scripts/serve.mjs"
   },
   "dependencies": {
-    "@opensourcenepal/nepali-calendar": "^1.2.0"
+    "@opensourcenepal/nepali-calendar": "^1.3.0"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
