@@ -167,6 +167,20 @@ The dropdown also hides when `calendars` has only one:
 
 `<osn-nepali-calendar>` still works too: it is the same component under its old name.
 
+### Pick only a month or a year
+
+Set `pick` to `month` or `year` to let the user pick a whole month or year instead of a day. The
+grid becomes the months of a year, or a page of twelve years, and the value becomes the first day
+of the picked month or year (or `min`, when that comes later):
+
+```html
+<osn-calendar pick="month" [(value)]="month" /> <osn-calendar pick="year" [(value)]="year" />
+```
+
+Months and years follow the shown calendar, so with `calendar="ad"` the user picks a Gregorian
+month. `getCalendar(calendar).monthOf(value)` turns the BS date back into that calendar's
+`{ year, month }`.
+
 ### Keep the script in sync with your app
 
 ```html
@@ -186,6 +200,7 @@ The dropdown also hides when `calendars` has only one:
 | `value`              | `BsDate \| null`                                  | `null`                              | The selected date. Supports `[(value)]`.                                     |
 | `valueChange`        | `BsDate`                                          |                                     | Emits the picked date.                                                       |
 | `dateSelect`         | `{ bs: BsDate; ad: AdDate; ns: NepalSambatDate }` |                                     | Emits the picked date with its AD and Nepal Sambat dates.                    |
+| `pick`               | `'day' \| 'month' \| 'year'`                      | `'day'`                             | Picks a day, or a whole month or year (the value is its first day).          |
 | `script`             | `'nepali' \| 'roman'`                             | `'nepali'`                          | The script for names and digits. Supports `[(script)]`.                      |
 | `scriptChange`       | `'nepali' \| 'roman'`                             |                                     | Emits when the user switches script.                                         |
 | `showScriptToggle`   | `boolean`                                         | `true`                              | Shows the Nepali/Roman toggle button.                                        |
@@ -206,7 +221,8 @@ also accept attribute form, such as `showAdDates="false"`.
 ## Keyboard
 
 Days are buttons, so Tab, Enter and Space work as usual. The arrow keys move between days, and
-across into the previous or next month, but not past `min` or `max`.
+across into the previous or next month, but not past `min` or `max`. In the month and year grids
+the arrow keys move between months or years.
 
 ## Styling
 

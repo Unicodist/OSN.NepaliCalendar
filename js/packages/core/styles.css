@@ -243,6 +243,70 @@
     color: inherit;
 }
 
+/* Month and year pickers (pick="month" or pick="year"): a three-column grid of buttons. */
+.osn-cal__periods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+}
+
+.osn-cal__period {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.375rem 0.25rem;
+    border: 1px solid transparent;
+    border-radius: calc(var(--osn-cal-radius) - 2px);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.osn-cal__period:hover:not(:disabled) {
+    background: var(--osn-cal-hover);
+}
+
+.osn-cal__period:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.osn-cal__period:focus-visible {
+    outline: 2px solid var(--osn-cal-accent);
+    outline-offset: 1px;
+}
+
+.osn-cal__period-name {
+    font-size: 0.9375rem;
+}
+
+.osn-cal__period-other {
+    color: var(--osn-cal-muted);
+    font-size: 0.6875rem;
+}
+
+.osn-cal__period--current {
+    border-color: var(--osn-cal-accent);
+}
+
+.osn-cal__period--selected,
+.osn-cal__period--selected:hover {
+    background: var(--osn-cal-accent);
+    color: var(--osn-cal-accent-fg);
+}
+
+.osn-cal__period--selected .osn-cal__period-other {
+    color: inherit;
+}
+
+.osn-cal__range {
+    font-weight: 600;
+}
+
 @media (prefers-color-scheme: dark) {
     .osn-cal:not(.osn-cal--light) {
         --osn-cal-bg: #0d1117;

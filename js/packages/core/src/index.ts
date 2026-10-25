@@ -8,3 +8,4 @@ export * from './month-view.js';
 export * from './names.js';
 export * from './nepal-sambat.js';
 export { MONTH_LENGTHS } from './month-lengths.js';
+export * from './period-view.js';
