@@ -1,6 +1,6 @@
 {
   "name": "@opensourcenepal/nepali-calendar",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Nepali (Bikram Sambat) calendar for JavaScript: AD/BS conversion, validation, and Roman or Devanagari formatting.",
   "license": "MIT",
   "author": "contentxx",
