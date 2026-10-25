@@ -370,4 +370,81 @@ describe('NepaliCalendar', () => {
             expect(screen.queryByRole('combobox', { name: 'पात्रो' })).toBeNull();
         });
     });
+
+    describe('picking a month or a year', () => {
+        it('shows the months of the year and picks the first day of one', async () => {
+            const onChange = vi.fn();
+            render(<NepaliCalendar today={today} pick="month" defaultScript="roman" onChange={onChange} />);
+
+            expect(document.querySelector('.osn-cal__grid')).toBeNull();
+            expect(document.querySelector('.osn-cal__select--month')).toBeNull();
+            expect(document.querySelectorAll('.osn-cal__period')).toHaveLength(12);
+            const shrawan = screen.getByRole('button', { name: 'Shrawan 2081' });
+            expect(shrawan.getAttribute('aria-current')).toBe('date');
+            expect(shrawan.querySelector('.osn-cal__period-other')?.textContent).toBe('Jul/Aug');
+            expect(screen.getByText('2024/2025')).toBeTruthy();
+
+            await userEvent.click(screen.getByRole('button', { name: 'Kartik 2081' }));
+            const picked = { year: 2081, month: 7, day: 1 };
+            expect(onChange).toHaveBeenCalledWith(picked, { year: 2024, month: 10, day: 17 }, toNepalSambat(picked));
+            expect(screen.getByRole('button', { name: 'Kartik 2081' }).getAttribute('aria-pressed')).toBe('true');
+        });
+
+        it('moves a year at a time and picks Gregorian months in AD', async () => {
+            const onChange = vi.fn();
+            render(
+                <NepaliCalendar today={today} pick="month" calendar="ad" defaultScript="roman" onChange={onChange} />,
+            );
+
+            await userEvent.click(screen.getByRole('button', { name: 'Next year' }));
+            await userEvent.click(screen.getByRole('button', { name: 'January 2025' }));
+            // 1 January 2025 is Poush 17, 2081.
+            expect(onChange.mock.calls[0]![0]).toEqual({ year: 2081, month: 9, day: 17 });
+        });
+
+        it('shows a page of years and picks the first day of one', async () => {
+            const onChange = vi.fn();
+            render(<NepaliCalendar today={today} pick="year" onChange={onChange} />);
+
+            expect(document.querySelectorAll('.osn-cal__period')).toHaveLength(12);
+            expect(document.querySelector('.osn-cal__range')?.textContent).toBe('२०७६ – २०८७');
+            expect(screen.getByRole('button', { name: '२०८१ वि.सं.' }).getAttribute('aria-current')).toBe('date');
+
+            await userEvent.click(screen.getByRole('button', { name: 'अर्का सालहरू' }));
+            expect(document.querySelector('.osn-cal__range')?.textContent).toBe('२०८८ – २०९९');
+            // Years past the supported range are disabled.
+            expect(screen.getByRole('button', { name: '२०९१ वि.सं.' }).hasAttribute('disabled')).toBe(true);
+            await userEvent.click(screen.getByRole('button', { name: '२०८९ वि.सं.' }));
+            expect(onChange.mock.calls[0]![0]).toEqual({ year: 2089, month: 1, day: 1 });
+        });
+
+        it('starts at min and disables periods outside the range', async () => {
+            const onChange = vi.fn();
+            const min = { year: 2081, month: 3, day: 10 };
+            render(<NepaliCalendar today={today} pick="year" defaultScript="roman" min={min} onChange={onChange} />);
+
+            expect(screen.getByRole('button', { name: '2080 BS' }).hasAttribute('disabled')).toBe(true);
+            expect(screen.getByRole('button', { name: 'Previous years' }).hasAttribute('disabled')).toBe(true);
+            await userEvent.click(screen.getByRole('button', { name: '2081 BS' }));
+            expect(onChange.mock.calls[0]![0]).toEqual(min);
+        });
+
+        it('highlights the month of the value in Nepal Sambat', () => {
+            render(<NepaliCalendar today={today} value={today} pick="month" calendar="ns" defaultScript="roman" />);
+
+            expect(screen.getByRole('button', { name: 'Dilla 1144' }).getAttribute('aria-pressed')).toBe('true');
+        });
+
+        it('moves focus between months with the arrow keys', async () => {
+            render(<NepaliCalendar today={today} pick="month" defaultScript="roman" />);
+
+            const shrawan = screen.getByRole('button', { name: 'Shrawan 2081' });
+            expect(shrawan.tabIndex).toBe(0);
+            shrawan.focus();
+            await userEvent.keyboard('{ArrowDown}');
+            expect(document.activeElement?.getAttribute('aria-label')).toBe('Kartik 2081');
+            await userEvent.keyboard('{ArrowLeft}');
+            expect(document.activeElement?.getAttribute('aria-label')).toBe('Ashwin 2081');
+        });
+    });
 });

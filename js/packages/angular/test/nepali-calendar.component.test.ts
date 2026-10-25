@@ -3,7 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { toNepalSambat } from '@opensourcenepal/nepali-calendar';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { type BsDate, type CalendarType, NepaliCalendarComponent, type Script } from '../src/public-api';
+import {
+    type BsDate,
+    type CalendarType,
+    NepaliCalendarComponent,
+    type PickLevel,
+    type Script,
+} from '../src/public-api';
 
 const today: BsDate = { year: 2081, month: 4, day: 15 };
 
@@ -15,6 +21,7 @@ const today: BsDate = { year: 2081, month: 4, day: 15 };
             [(value)]="value"
             [(script)]="script"
             [(calendar)]="calendar"
+            [pick]="pick"
             [calendars]="calendars"
             [showCalendarToggle]="showCalendarToggle"
             [initialMonth]="initialMonth"
@@ -32,6 +39,7 @@ class HostComponent {
     value: BsDate | null = null;
     script: Script = 'nepali';
     calendar: CalendarType = 'bs';
+    pick: PickLevel = 'day';
     calendars: readonly CalendarType[] | null = null;
     showCalendarToggle = true;
     initialMonth: { year: number; month: number } | null = null;
@@ -482,6 +490,95 @@ describe('NepaliCalendarComponent', () => {
             ]);
             expect(root.querySelector<HTMLButtonElement>('[aria-label$=", 24 July 2024"]')!.disabled).toBe(true);
             expect(root.querySelector<HTMLButtonElement>('[aria-label$=", 25 July 2024"]')!.disabled).toBe(false);
+        });
+    });
+
+    describe('picking a month or a year', () => {
+        it('shows the months of the year and picks the first day of one', async () => {
+            const { host, root, click, button } = await setup((h) => {
+                h.script = 'roman';
+                h.pick = 'month';
+            });
+
+            expect(root.querySelector('.osn-cal__grid')).toBeNull();
+            expect(root.querySelector('.osn-cal__select--month')).toBeNull();
+            expect(root.querySelectorAll('.osn-cal__period')).toHaveLength(12);
+            expect(button('Shrawan 2081').getAttribute('aria-current')).toBe('date');
+            expect(button('Shrawan 2081').querySelector('.osn-cal__period-other')?.textContent).toBe('Jul/Aug');
+
+            await click('Kartik 2081');
+            expect(host.value).toEqual({ year: 2081, month: 7, day: 1 });
+            expect(host.picked).toEqual({
+                bs: { year: 2081, month: 7, day: 1 },
+                ad: { year: 2024, month: 10, day: 17 },
+                ns: toNepalSambat({ year: 2081, month: 7, day: 1 }),
+            });
+            expect(button('Kartik 2081').getAttribute('aria-pressed')).toBe('true');
+        });
+
+        it('moves a year at a time and picks Gregorian months in AD', async () => {
+            const { host, click } = await setup((h) => {
+                h.script = 'roman';
+                h.pick = 'month';
+                h.calendar = 'ad';
+            });
+
+            await click('Next year');
+            await click('January 2025');
+            // 1 January 2025 is Poush 17, 2081.
+            expect(host.value).toEqual({ year: 2081, month: 9, day: 17 });
+        });
+
+        it('shows a page of years and picks the first day of one', async () => {
+            const { host, root, click, button } = await setup((h) => (h.pick = 'year'));
+
+            expect(root.querySelector('.osn-cal__range')?.textContent?.trim()).toBe('२०७६ – २०८७');
+            expect(button('२०८१ वि.सं.').getAttribute('aria-current')).toBe('date');
+
+            await click('अर्का सालहरू');
+            expect(root.querySelector('.osn-cal__range')?.textContent?.trim()).toBe('२०८८ – २०९९');
+            expect(button('२०९१ वि.सं.').disabled).toBe(true);
+            await click('२०८९ वि.सं.');
+            expect(host.value).toEqual({ year: 2089, month: 1, day: 1 });
+        });
+
+        it('starts at min and disables periods outside the range', async () => {
+            const min = { year: 2081, month: 3, day: 10 };
+            const { host, click, button } = await setup((h) => {
+                h.script = 'roman';
+                h.pick = 'year';
+                h.min = min;
+            });
+
+            expect(button('2080 BS').disabled).toBe(true);
+            expect(button('Previous years').disabled).toBe(true);
+            await click('2081 BS');
+            expect(host.value).toEqual(min);
+        });
+
+        it('highlights the month of the value in Nepal Sambat', async () => {
+            const { button } = await setup((h) => {
+                h.script = 'roman';
+                h.pick = 'month';
+                h.calendar = 'ns';
+                h.value = today;
+            });
+
+            expect(button('Dilla 1144').getAttribute('aria-pressed')).toBe('true');
+        });
+
+        it('moves focus between months with the arrow keys', async () => {
+            const { button } = await setup((h) => {
+                h.script = 'roman';
+                h.pick = 'month';
+            });
+
+            const shrawan = button('Shrawan 2081');
+            expect(shrawan.tabIndex).toBe(0);
+            shrawan.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+            expect(document.activeElement?.getAttribute('aria-label')).toBe('Kartik 2081');
+            document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+            expect(document.activeElement?.getAttribute('aria-label')).toBe('Ashwin 2081');
         });
     });
 });

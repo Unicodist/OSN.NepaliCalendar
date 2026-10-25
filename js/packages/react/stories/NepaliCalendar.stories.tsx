@@ -18,6 +18,7 @@ const meta = {
         calendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
         defaultCalendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
         calendars: { control: 'check', options: ['bs', 'ad', 'ns'] },
+        pick: { control: 'inline-radio', options: ['day', 'month', 'year'] },
     },
 } satisfies Meta<typeof NepaliCalendar>;
 
@@ -26,6 +27,21 @@ type Story = StoryObj<typeof meta>;
 
 /** Today's month in Nepali script, with AD dates under each day. */
 export const Default: Story = {};
+
+/** Picks a whole month: the value is the first day of the picked month. The arrows move a year. */
+export const MonthPicker: Story = {
+    args: { pick: 'month', defaultScript: 'roman' },
+};
+
+/** Picks a whole year from a page of twelve: the value is the first day of the picked year. */
+export const YearPicker: Story = {
+    args: { pick: 'year', defaultScript: 'roman' },
+};
+
+/** Months follow the shown calendar, so in AD the user picks a Gregorian month. */
+export const AdMonthPicker: Story = {
+    args: { pick: 'month', defaultCalendar: 'ad', defaultScript: 'roman' },
+};
 
 /** Roman (transliterated) month and day names with Latin digits. */
 export const Roman: Story = {

@@ -12,12 +12,17 @@ import {
     MIN_DATE,
     type MonthViewDay,
     type NepalSambatDate,
+    type PickLevel,
     type Script,
+    YEARS_PER_PAGE,
     addDays,
+    buildMonthPicker,
+    buildYearPicker,
     clampBs,
     convertMonth,
     getCalendar,
     isSameBs,
+    pickedDate,
     toAd,
     toDigits,
     toNepalSambat,
@@ -34,6 +39,13 @@ export interface NepaliCalendarProps {
      * always the BS date, whichever calendar is shown, because two days can share one NS date.
      */
     onChange?: (date: BsDate, ad: AdDate, ns: NepalSambatDate) => void;
+    /**
+     * What the user picks: a `day` (the default), a whole `month` or a whole `year`. For `month` and
+     * `year` the calendar shows a grid of months or years, and `onChange` gets the first day of the
+     * picked month or year that is in range. Months and years follow the shown calendar, so in `ad`
+     * the user picks a Gregorian month; `getCalendar(calendar).monthOf(date)` gives it back.
+     */
+    pick?: PickLevel;
     /** The script for names and digits. Pass it with `onScriptChange` to control it. */
     script?: Script;
     /** The initial script when it is not controlled. Defaults to `nepali`. */
@@ -75,6 +87,27 @@ export interface NepaliCalendarProps {
 }
 
 const ARROW_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+// The month and year grids have three columns.
+const PERIOD_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -3, ArrowDown: 3 };
+
+/** A month or year cell in the month and year grids. */
+interface PeriodCell {
+    readonly year: number;
+    readonly month?: number;
+    readonly key: string;
+    readonly name: string;
+    readonly label: string;
+    readonly otherLabel: string;
+    readonly isCurrent: boolean;
+    readonly isSelected: boolean;
+    readonly isDisabled: boolean;
+}
+
+const NAV_LABELS: Readonly<Record<PickLevel, Readonly<Record<Script, readonly [string, string]>>>> = {
+    day: { nepali: ['अघिल्लो महिना', 'अर्को महिना'], roman: ['Previous month', 'Next month'] },
+    month: { nepali: ['अघिल्लो साल', 'अर्को साल'], roman: ['Previous year', 'Next year'] },
+    year: { nepali: ['अघिल्ला सालहरू', 'अर्का सालहरू'], roman: ['Previous years', 'Next years'] },
+};
 
 /**
  * A month-view calendar that lets the user pick a day. It shows a Bikram Sambat month with AD dates
@@ -84,6 +117,7 @@ export function NepaliCalendar({
     value,
     defaultValue = null,
     onChange,
+    pick = 'day',
     script,
     defaultScript = 'nepali',
     onScriptChange,
@@ -117,6 +151,7 @@ export function NepaliCalendar({
         return { system, ...getCalendar(system).monthOf(selected ?? today) };
     });
     const [focused, setFocused] = useState<BsDate | null>(null);
+    const [focusedPeriod, setFocusedPeriod] = useState<string | null>(null);
     const range: DateRange = useMemo(() => ({ min, max }), [min, max]);
     const years = useMemo(() => cal.years(range), [cal, range]);
     // Convert and clamp at render time, so switching calendars or changing min or max keeps the
@@ -125,12 +160,20 @@ export function NepaliCalendar({
     const shown = cal.clampMonth(converted.year, converted.month, range);
     const gridRef = useRef<HTMLTableElement>(null);
 
+    const periodsRef = useRef<HTMLDivElement>(null);
+
     // Keep keyboard focus on the focused day after the month changes under it.
     useEffect(() => {
         if (focused) {
             gridRef.current?.querySelector<HTMLButtonElement>('[tabindex="0"]')?.focus();
         }
     }, [focused]);
+
+    useEffect(() => {
+        if (focusedPeriod) {
+            periodsRef.current?.querySelector<HTMLButtonElement>('[tabindex="0"]')?.focus();
+        }
+    }, [focusedPeriod]);
 
     const view = useMemo(
         () => cal.buildView(shown.year, shown.month, { today, selected, script: activeScript, ...range }),
@@ -139,6 +182,19 @@ export function NepaliCalendar({
 
     // The one day reachable with Tab: the focused day, else the selection, today or the first enabled day.
     const tabStop = pickTabStop(view.weeks.flat(), focused, selected, today);
+
+    const periods = useMemo(() => {
+        const options = { today, selected, script: activeScript, ...range };
+        if (pick === 'month') {
+            return buildMonthPicker(system, shown.year, options);
+        }
+        if (pick === 'year') {
+            return buildYearPicker(system, shown.year, options);
+        }
+        return null;
+    }, [pick, system, shown.year, today, selected, activeScript, range]);
+    const periodCells: readonly PeriodCell[] = periods ? ('months' in periods ? periods.months : periods.years) : [];
+    const periodTabStop = pickPeriodTabStop(periodCells, focusedPeriod);
 
     const select = (day: BsDate) => {
         if (value === undefined) {
@@ -173,6 +229,33 @@ export function NepaliCalendar({
         setVisible({ system, ...cal.shiftMonth(shown.year, shown.month, delta, range) });
     };
 
+    // The arrows move a month in the day grid, a year in the month grid and a page in the year grid.
+    const movePage = (delta: number) => {
+        if (pick === 'day') {
+            moveMonth(delta);
+            return;
+        }
+        setFocusedPeriod(null);
+        const years = pick === 'year' ? delta * YEARS_PER_PAGE : delta;
+        setVisible({ system, ...cal.moveToYear(shown.year, shown.month, shown.year + years, range) });
+    };
+
+    const selectPeriod = (cell: PeriodCell) => {
+        if (pick === 'day') return;
+        const date = pickedDate(system, pick, cell.year, cell.month ?? 1, range);
+        if (date) select(date);
+    };
+
+    const onPeriodKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+        const step = PERIOD_STEPS[event.key];
+        if (step === undefined) {
+            return;
+        }
+        event.preventDefault();
+        const target = nextEnabled(periodCells, index, step);
+        if (target) setFocusedPeriod(target.key);
+    };
+
     const jumpTo = (year: number, month: number) => {
         setFocused(null);
         show(year, month);
@@ -185,6 +268,7 @@ export function NepaliCalendar({
 
     const goToToday = () => {
         setFocused(null);
+        setFocusedPeriod(null);
         const month = cal.monthOf(today);
         show(month.year, month.month);
     };
@@ -205,7 +289,15 @@ export function NepaliCalendar({
 
     const nepali = activeScript === 'nepali';
     const monthNames = cal.monthNames(activeScript, view.year);
-    const title = `${monthNames[view.month - 1]} ${toDigits(view.year, activeScript)}`;
+    const title = !periods
+        ? `${monthNames[view.month - 1]} ${toDigits(view.year, activeScript)}`
+        : 'months' in periods
+          ? toDigits(periods.year, activeScript)
+          : `${toDigits(periods.first, activeScript)} – ${toDigits(periods.last, activeScript)}`;
+    const [previousLabel, nextLabel] = NAV_LABELS[pick][activeScript];
+    const hasPrevious = periods ? periods.hasPrevious : view.hasPrevious;
+    const hasNext = periods ? periods.hasNext : view.hasNext;
+    const otherLabel = !periods ? view.otherLabel : 'months' in periods ? periods.otherLabel : '';
     const calendarOptions = calendars.includes(system) ? calendars : [system, ...calendars];
     const showCalendarPicker = showCalendarToggle && calendarOptions.length > 1;
 
@@ -215,107 +307,150 @@ export function NepaliCalendar({
                 <button
                     type="button"
                     className="osn-cal__nav osn-cal__nav--previous"
-                    aria-label={nepali ? 'अघिल्लो महिना' : 'Previous month'}
-                    disabled={!view.hasPrevious}
-                    onClick={() => moveMonth(-1)}
+                    aria-label={previousLabel}
+                    disabled={!hasPrevious}
+                    onClick={() => movePage(-1)}
                 >
                     ‹
                 </button>
                 <div className="osn-cal__title">
                     <span className="osn-cal__title-bs">
-                        <select
-                            className="osn-cal__select osn-cal__select--month"
-                            aria-label={nepali ? 'महिना' : 'Month'}
-                            value={view.month}
-                            onChange={(event) => jumpTo(view.year, Number(event.target.value))}
-                        >
-                            {monthNames.map((name, i) => (
-                                <option key={i} value={i + 1} disabled={!cal.isMonthInRange(view.year, i + 1, range)}>
-                                    {name}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            className="osn-cal__select osn-cal__select--year"
-                            aria-label={nepali ? 'साल' : 'Year'}
-                            value={view.year}
-                            onChange={(event) => jumpToYear(Number(event.target.value))}
-                        >
-                            {years.map((year) => (
-                                <option key={year} value={year}>
-                                    {toDigits(year, activeScript)}
-                                </option>
-                            ))}
-                        </select>
+                        {pick === 'day' && (
+                            <select
+                                className="osn-cal__select osn-cal__select--month"
+                                aria-label={nepali ? 'महिना' : 'Month'}
+                                value={view.month}
+                                onChange={(event) => jumpTo(view.year, Number(event.target.value))}
+                            >
+                                {monthNames.map((name, i) => (
+                                    <option
+                                        key={i}
+                                        value={i + 1}
+                                        disabled={!cal.isMonthInRange(view.year, i + 1, range)}
+                                    >
+                                        {name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        {pick === 'year' ? (
+                            <span className="osn-cal__range" aria-live="polite">
+                                {title}
+                            </span>
+                        ) : (
+                            <select
+                                className="osn-cal__select osn-cal__select--year"
+                                aria-label={nepali ? 'साल' : 'Year'}
+                                value={view.year}
+                                onChange={(event) => jumpToYear(Number(event.target.value))}
+                            >
+                                {years.map((year) => (
+                                    <option key={year} value={year}>
+                                        {toDigits(year, activeScript)}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </span>
-                    {showAdDates && (
+                    {showAdDates && otherLabel && (
                         <span className="osn-cal__title-ad" aria-live="polite">
-                            {view.otherLabel}
+                            {otherLabel}
                         </span>
                     )}
                 </div>
                 <button
                     type="button"
                     className="osn-cal__nav osn-cal__nav--next"
-                    aria-label={nepali ? 'अर्को महिना' : 'Next month'}
-                    disabled={!view.hasNext}
-                    onClick={() => moveMonth(1)}
+                    aria-label={nextLabel}
+                    disabled={!hasNext}
+                    onClick={() => movePage(1)}
                 >
                     ›
                 </button>
             </div>
-            <table className="osn-cal__grid" aria-label={title} ref={gridRef}>
-                <thead>
-                    <tr>
-                        {ABBREVIATED_DAY_NAMES[activeScript].map((name, i) => (
-                            <th
-                                key={i}
-                                scope="col"
-                                abbr={DAY_NAMES[activeScript][i]}
-                                className={`osn-cal__weekday${i === 6 ? ' osn-cal__weekday--saturday' : ''}`}
-                            >
-                                {name}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {view.weeks.map((week, w) => (
-                        <tr key={w}>
-                            {week.map((day, i) =>
-                                day === null ? (
-                                    <td key={i} className="osn-cal__cell osn-cal__cell--empty" />
-                                ) : (
-                                    <td key={day.key} className="osn-cal__cell">
-                                        <button
-                                            type="button"
-                                            className={dayClass(day, cal.dayMarkers(day))}
-                                            tabIndex={isSameBs(day.bs, tabStop) ? 0 : -1}
-                                            aria-label={cal.dayLabel(day, activeScript)}
-                                            title={cal.dayLabel(day, activeScript)}
-                                            aria-current={day.isToday ? 'date' : undefined}
-                                            aria-pressed={day.isSelected}
-                                            data-date={day.key}
-                                            disabled={day.isDisabled}
-                                            onClick={() => select(day.bs)}
-                                            onKeyDown={(event) => onDayKeyDown(event, day.bs)}
-                                        >
-                                            <span className="osn-cal__day-bs">
-                                                {toDigits(cal.dayNumber(day), activeScript)}
-                                            </span>
-                                            {showAdDates && (
-                                                <span className="osn-cal__day-ad">
-                                                    {toDigits(cal.otherDayNumber(day), activeScript)}
-                                                </span>
-                                            )}
-                                        </button>
-                                    </td>
-                                ),
+            {periods ? (
+                <div
+                    className={`osn-cal__periods osn-cal__periods--${pick}`}
+                    role="group"
+                    aria-label={title}
+                    ref={periodsRef}
+                >
+                    {periodCells.map((cell, i) => (
+                        <button
+                            key={cell.key}
+                            type="button"
+                            className={periodClass(cell)}
+                            tabIndex={cell.key === periodTabStop ? 0 : -1}
+                            aria-label={cell.label}
+                            title={cell.label}
+                            aria-current={cell.isCurrent ? 'date' : undefined}
+                            aria-pressed={cell.isSelected}
+                            data-period={cell.key}
+                            disabled={cell.isDisabled}
+                            onClick={() => selectPeriod(cell)}
+                            onKeyDown={(event) => onPeriodKeyDown(event, i)}
+                        >
+                            <span className="osn-cal__period-name">{cell.name}</span>
+                            {showAdDates && cell.otherLabel && (
+                                <span className="osn-cal__period-other">{cell.otherLabel}</span>
                             )}
-                        </tr>
+                        </button>
                     ))}
-                </tbody>
-            </table>
+                </div>
+            ) : (
+                <table className="osn-cal__grid" aria-label={title} ref={gridRef}>
+                    <thead>
+                        <tr>
+                            {ABBREVIATED_DAY_NAMES[activeScript].map((name, i) => (
+                                <th
+                                    key={i}
+                                    scope="col"
+                                    abbr={DAY_NAMES[activeScript][i]}
+                                    className={`osn-cal__weekday${i === 6 ? ' osn-cal__weekday--saturday' : ''}`}
+                                >
+                                    {name}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {view.weeks.map((week, w) => (
+                            <tr key={w}>
+                                {week.map((day, i) =>
+                                    day === null ? (
+                                        <td key={i} className="osn-cal__cell osn-cal__cell--empty" />
+                                    ) : (
+                                        <td key={day.key} className="osn-cal__cell">
+                                            <button
+                                                type="button"
+                                                className={dayClass(day, cal.dayMarkers(day))}
+                                                tabIndex={isSameBs(day.bs, tabStop) ? 0 : -1}
+                                                aria-label={cal.dayLabel(day, activeScript)}
+                                                title={cal.dayLabel(day, activeScript)}
+                                                aria-current={day.isToday ? 'date' : undefined}
+                                                aria-pressed={day.isSelected}
+                                                data-date={day.key}
+                                                disabled={day.isDisabled}
+                                                onClick={() => select(day.bs)}
+                                                onKeyDown={(event) => onDayKeyDown(event, day.bs)}
+                                            >
+                                                <span className="osn-cal__day-bs">
+                                                    {toDigits(cal.dayNumber(day), activeScript)}
+                                                </span>
+                                                {showAdDates && (
+                                                    <span className="osn-cal__day-ad">
+                                                        {toDigits(cal.otherDayNumber(day), activeScript)}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        </td>
+                                    ),
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
             {(showTodayButton || showScriptToggle || showCalendarPicker) && (
                 <div className="osn-cal__toolbar">
                     {showTodayButton ? (
@@ -365,6 +500,33 @@ function dayClass(day: MonthViewDay, markers: readonly string[]): string {
     if (day.isSelected) name += ' osn-cal__day--selected';
     if (day.isDisabled) name += ' osn-cal__day--disabled';
     return name;
+}
+
+function periodClass(cell: PeriodCell): string {
+    let name = 'osn-cal__period';
+    if (cell.isCurrent) name += ' osn-cal__period--current';
+    if (cell.isSelected) name += ' osn-cal__period--selected';
+    if (cell.isDisabled) name += ' osn-cal__period--disabled';
+    return name;
+}
+
+/** The one month or year reachable with Tab: the focused one, else the selection, the current one or the first enabled. */
+function pickPeriodTabStop(cells: readonly PeriodCell[], focused: string | null): string | undefined {
+    const enabled = cells.filter((c) => !c.isDisabled);
+    return (
+        enabled.find((c) => c.key === focused) ??
+        enabled.find((c) => c.isSelected) ??
+        enabled.find((c) => c.isCurrent) ??
+        enabled[0]
+    )?.key;
+}
+
+/** The next enabled cell from `index` in steps of `step`, or `undefined` at the edge of the grid. */
+function nextEnabled(cells: readonly PeriodCell[], index: number, step: number): PeriodCell | undefined {
+    for (let i = index + step; i >= 0 && i < cells.length; i += step) {
+        if (!cells[i]!.isDisabled) return cells[i];
+    }
+    return undefined;
 }
 
 function pickTabStop(days: (MonthViewDay | null)[], ...candidates: (BsDate | null)[]): BsDate | undefined {

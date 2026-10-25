@@ -12,6 +12,7 @@ const meta: Meta<NepaliCalendarComponent> = {
     args: {
         script: 'nepali',
         calendar: 'bs',
+        pick: 'day',
         showCalendarToggle: true,
         showAdDates: true,
         showScriptToggle: true,
@@ -25,6 +26,7 @@ const meta: Meta<NepaliCalendarComponent> = {
         script: { control: 'inline-radio', options: ['nepali', 'roman'] },
         calendar: { control: 'inline-radio', options: ['bs', 'ad', 'ns'] },
         calendars: { control: 'check', options: ['bs', 'ad', 'ns'] },
+        pick: { control: 'inline-radio', options: ['day', 'month', 'year'] },
     },
 };
 
@@ -33,6 +35,21 @@ type Story = StoryObj<NepaliCalendarComponent>;
 
 /** Today's month in Nepali script, with AD dates under each day. */
 export const Default: Story = {};
+
+/** `pick="month"`: the value is the first day of the picked month. The arrows move a year. */
+export const MonthPicker: Story = {
+    args: { script: 'roman', pick: 'month' },
+};
+
+/** `pick="year"`: picks a year from a page of twelve; the value is the first day of that year. */
+export const YearPicker: Story = {
+    args: { script: 'roman', pick: 'year' },
+};
+
+/** Months follow the shown calendar, so in Nepal Sambat the user picks a lunar month. */
+export const NepalSambatMonthPicker: Story = {
+    args: { script: 'roman', pick: 'month', calendar: 'ns' },
+};
 
 /** Roman (transliterated) month and day names with Latin digits. */
 export const Roman: Story = {

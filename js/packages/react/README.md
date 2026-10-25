@@ -116,6 +116,21 @@ const [calendar, setCalendar] = useState<CalendarType>('bs');
 <NepaliCalendar calendars={['bs', 'ns']} calendar={calendar} onCalendarChange={setCalendar} />;
 ```
 
+### Pick only a month or a year
+
+Set `pick` to `month` or `year` to let the user pick a whole month or year instead of a day. The
+grid becomes the months of a year, or a page of twelve years, and `onChange` gets the first day of
+the picked month or year (or `min`, when that comes later):
+
+```tsx
+<NepaliCalendar pick="month" onChange={(bs) => setMonth({ year: bs.year, month: bs.month })} />
+<NepaliCalendar pick="year" onChange={(bs) => setYear(bs.year)} />
+```
+
+Months and years follow the shown calendar, so with `calendar="ad"` the user picks a Gregorian
+month. `getCalendar(calendar).monthOf(date)` turns the BS date back into that calendar's
+`{ year, month }`.
+
 ### Control the script yourself
 
 ```tsx
@@ -149,6 +164,7 @@ form:
 | `value`              | `BsDate \| null`                                        |                                     | The selected date. Pass it with `onChange` to control the selection.          |
 | `defaultValue`       | `BsDate \| null`                                        | `null`                              | The initial selection when it is not controlled.                              |
 | `onChange`           | `(bs: BsDate, ad: AdDate, ns: NepalSambatDate) => void` |                                     | Called when the user picks a day, with its BS, AD and Nepal Sambat dates.     |
+| `pick`               | `'day' \| 'month' \| 'year'`                            | `'day'`                             | Picks a day, or a whole month or year (the value is its first day).           |
 | `script`             | `'nepali' \| 'roman'`                                   |                                     | The script for names and digits. Pass it with `onScriptChange` to control it. |
 | `defaultScript`      | `'nepali' \| 'roman'`                                   | `'nepali'`                          | The initial script when it is not controlled.                                 |
 | `onScriptChange`     | `(script) => void`                                      |                                     | Called when the user switches script.                                         |
@@ -171,7 +187,8 @@ form:
 ## Keyboard
 
 Days are buttons, so Tab, Enter and Space work as usual. The arrow keys move between days, and
-across into the previous or next month, but not past `min` or `max`.
+across into the previous or next month, but not past `min` or `max`. In the month and year grids
+the arrow keys move between months or years.
 
 ## Styling
 

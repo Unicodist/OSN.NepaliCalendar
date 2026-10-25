@@ -221,6 +221,24 @@ same `{ min, max }` BS range. `buildCalendarView(type, year, month, options)`, `
 `isCalendarMonthInRange`, `calendarYears`, `calendarMonthNames`, `dayLabel` and `monthOf` do the
 same from a type.
 
+### Month and year pickers
+
+`buildMonthPicker(type, year, options)` lays out the months of a year and
+`buildYearPicker(type, year, options)` a page of twelve years, each with its name, the other
+calendar's span, and `isCurrent`, `isSelected` and `isDisabled` flags. `pickedDate(type, 'month', year, month, range)`
+(or `firstDayOfMonth` and `firstDayOfYear`) gives the BS date to select: the first day of that
+month or year inside the range. The components use these for `pick="month"` and `pick="year"`.
+
+```ts
+import { buildMonthPicker, buildYearPicker, pickedDate } from '@opensourcenepal/nepali-calendar';
+
+const months = buildMonthPicker('bs', 2081, { script: 'roman' });
+months.months[3]; // { name: 'Shrawan', label: 'Shrawan 2081', otherLabel: 'Jul/Aug', ... }
+months.otherLabel; // '2024/2025'
+buildYearPicker('bs', 2081).first; // 2076, the page is 2076 to 2087
+pickedDate('ad', 'month', 2024, 7); // { year: 2081, month: 3, day: 17 }, 1 July 2024
+```
+
 ## Stylesheet
 
 `@opensourcenepal/nepali-calendar/styles.css` styles the React and Angular calendar components. Both
